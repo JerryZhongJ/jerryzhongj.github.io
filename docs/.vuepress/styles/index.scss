@@ -1,0 +1,16 @@
+:root {
+    --search-input-width: 20.8rem !important
+}
+
+.navbar-right {
+    flex-direction: row-reverse;
+    flex: 1
+  }
+  
+.navbar-center{
+    flex: 2;
+}
+
+.navbar-left{
+    flex: 1
+}
