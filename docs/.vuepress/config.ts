@@ -1,16 +1,28 @@
-import { defineUserConfig } from "vuepress";
+// import { defineUserConfig } from "vuepress";
 import { hopeTheme } from "vuepress-theme-hope";
-import { searchPlugin } from '@vuepress/plugin-search';
-// import { fullTextSearchPlugin }from "vuepress-plugin-full-text-search2";
+// import { searchPlugin } from '@vuepress/plugin-search';
+import { gitPlugin } from '@vuepress/plugin-git';
+import fullTextSearchPlugin from "vuepress-plugin-full-text-search2";
 
-export default defineUserConfig({
+export default ({
   theme: hopeTheme({
     plugins: {
       blog: {
         autoExcerpt: true,
       },
-
+      mdEnhance: {
+        footnote: true,
+        container: true,
+        mermaid: true,
+        sub: true,
+        sup: true,
+        codetabs: true
+      },
+      
     },
+
+    repo: "jerryzhongj/jerryzhongj.github.io",
+    repoLabel: "Github",
 
     blog: {
       name: "Jerry Zhong",
@@ -24,14 +36,19 @@ export default defineUserConfig({
       right: ["Outlook", "Repo"]
     },
 
-    displayFooter: true,
     sidebar: false
   }),
 
   plugins:[
-    searchPlugin({
+    // searchPlugin({
       
-    })
+    // }),
+    fullTextSearchPlugin({
+
+    }),
+    gitPlugin({
+      
+    }),
   ],
 
   title: "JerryZhongJ's Blog",
