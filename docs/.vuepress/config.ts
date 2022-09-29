@@ -1,8 +1,8 @@
 // import { defineUserConfig } from "vuepress";
 import { hopeTheme } from "vuepress-theme-hope";
-// import { searchPlugin } from '@vuepress/plugin-search';
+import { searchPlugin } from '@vuepress/plugin-search';
 import { gitPlugin } from '@vuepress/plugin-git';
-import fullTextSearchPlugin from "vuepress-plugin-full-text-search2";
+// import fullTextSearchPlugin from "vuepress-plugin-full-text-search2";
 
 export default ({
   theme: hopeTheme({
@@ -40,12 +40,12 @@ export default ({
   }),
 
   plugins:[
-    // searchPlugin({
+    searchPlugin({
       
-    // }),
-    fullTextSearchPlugin({
-
     }),
+    // fullTextSearchPlugin({
+
+    // }),
     gitPlugin({
       
     }),
