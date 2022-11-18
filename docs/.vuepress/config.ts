@@ -16,7 +16,8 @@ export default ({
         mermaid: true,
         sub: true,
         sup: true,
-        codetabs: true
+        codetabs: true,
+        imageTitle: true
       },
       
     },
