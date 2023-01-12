@@ -7,7 +7,7 @@ tag:
   - 欧洲
 ---
 
-## [十字军东侵](https://www.bilibili.com/bangumi/play/ep517748)
+<iframe src="https://www.bilibili.com/bangumi/play/ep517748" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 ### 第一次起因
 - 1073年，塞尔柱**突厥**人占领耶路撒冷

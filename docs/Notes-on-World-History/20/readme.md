@@ -8,7 +8,7 @@ tag:
   - 伊斯兰教
 ---
 
-## [历史上的阿拉伯帝国](https://www.bilibili.com/bangumi/play/ep517745/)
+<iframe src="https://www.bilibili.com/bangumi/play/ep517745/" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 7世纪初，阿拉伯，原始社会末期，氏族部落相互抢夺资源。
 

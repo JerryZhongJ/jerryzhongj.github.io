@@ -7,7 +7,7 @@ tag:
   - 欧洲
 ---
 
-## [文艺复兴（2）](https://www.bilibili.com/bangumi/play/ep517750/)
+<iframe src="https://www.bilibili.com/bangumi/play/ep517750/" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 ### 政治
 - 市民与君主联盟(？)

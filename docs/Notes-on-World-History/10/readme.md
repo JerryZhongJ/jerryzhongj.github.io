@@ -7,7 +7,7 @@ tag:
   - 古希腊
 ---
 
-## [古代希腊文明的回声](https://www.bilibili.com/bangumi/play/ep517667)
+<iframe src="https://www.bilibili.com/bangumi/play/ep517667" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 ### 概述
 - 西方字母：**拉丁**文 <- **古希腊**文 <- **腓尼基**文 <- 古埃及的**象形文**、古代西亚的**楔形文**

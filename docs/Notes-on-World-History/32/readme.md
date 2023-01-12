@@ -7,7 +7,7 @@ tag:
   - 欧洲
 ---
 
-## [欧洲人新航路的开辟与早期殖民](https://www.bilibili.com/bangumi/play/ep635236/)
+<iframe src="https://www.bilibili.com/bangumi/play/ep635236/" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 ### 哥伦布发现新大陆
 - 南北美之间的岛被称为**西印度群岛**

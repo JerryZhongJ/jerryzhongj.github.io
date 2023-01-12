@@ -7,7 +7,7 @@ tag:
   - 欧洲
 ---
 
-## [英国资本主义的起源](https://www.bilibili.com/bangumi/play/ep635237/)
+<iframe src="https://www.bilibili.com/bangumi/play/ep635237/" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 ### 圈地运动
 - 15世纪后期 - 19世纪

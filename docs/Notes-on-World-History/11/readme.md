@@ -6,7 +6,7 @@ tag:
   - 历史
   - 古希腊
 ---
-## [古代希腊文化](https://www.bilibili.com/bangumi/play/ep517678/)
+<iframe src="https://www.bilibili.com/bangumi/play/ep517678/" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 
 

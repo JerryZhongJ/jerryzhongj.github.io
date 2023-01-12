@@ -6,7 +6,7 @@ tag:
   - 历史
   - 欧洲
 ---
-## [基辅罗斯和俄罗斯统一国家的建立](https://www.bilibili.com/bangumi/play/ep517744)
+<iframe src="https://www.bilibili.com/bangumi/play/ep517744" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 ### 斯拉夫始祖传说
 - **潘诺**有三个儿子：**列赫**、**捷克**、**罗斯**

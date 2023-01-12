@@ -7,7 +7,7 @@ tag:
   - 欧洲
 ---
 
-## [西欧封建国家](https://www.bilibili.com/bangumi/play/ep517742)
+<iframe src="https://www.bilibili.com/bangumi/play/ep517742" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 日耳曼国家都精神上仰慕罗马。
 

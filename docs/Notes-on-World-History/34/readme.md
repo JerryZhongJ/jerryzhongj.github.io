@@ -6,7 +6,7 @@ tag:
   - 历史
   - 欧洲
 ---
-## [尼德兰革命](https://www.bilibili.com/bangumi/play/ep635238/)
+<iframe src="https://www.bilibili.com/bangumi/play/ep635238/" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 ### 尼德兰
 - 欧洲大陆**西北**部

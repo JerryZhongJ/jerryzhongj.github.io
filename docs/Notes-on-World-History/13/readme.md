@@ -7,7 +7,7 @@ tag:
   - 罗马
 ---
 
-## [罗马共和国](https://www.bilibili.com/bangumi/play/ep517680/)
+<iframe src="https://www.bilibili.com/bangumi/play/ep517680/" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 ### 传说
 1. 始祖是战神与人类公主生的孪生兄弟，被仇家抛弃

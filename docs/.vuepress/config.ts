@@ -55,5 +55,6 @@ export default ({
   title: "JerryZhongJ's Blog",
   description: "记录一些零散的知识",
   lang: "zh-CN"
+
 });
 

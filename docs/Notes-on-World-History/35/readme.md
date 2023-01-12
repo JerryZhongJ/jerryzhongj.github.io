@@ -7,9 +7,7 @@ tag:
   - 欧洲
 ---
 
-## [三十年战争](https://www.bilibili.com/bangumi/play/ep635239/)
-
-<iframe src="https://www.bilibili.com/bangumi/play/ep635239/"></iframe>
+<iframe src="https://www.bilibili.com/bangumi/play/ep635239/" width="100%" style="max-width: 700px;"  height="600px"></iframe>
 
 ### 概述
 - 1618 - 1648

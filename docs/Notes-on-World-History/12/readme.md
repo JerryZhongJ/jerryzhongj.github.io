@@ -7,7 +7,7 @@ tag:
   - 古希腊
   - 马其顿
 ---
-## [希腊化时代](https://www.bilibili.com/bangumi/play/ep517679/)
+<iframe src="https://www.bilibili.com/bangumi/play/ep517679/" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 
 BC334，亚历山大三世东征波斯国 - BC31，罗马征服埃及托勒密王朝

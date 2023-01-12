@@ -7,7 +7,7 @@ tag:
   - 印度
 ---
 
-## [古代印度](https://www.bilibili.com/bangumi/play/ep517751/)
+<iframe src="https://www.bilibili.com/bangumi/play/ep517751/" width="100%" style="max-width: 700px;" height="600px"></iframe>
 
 ### 雅利安人
 - BC1500，我国商朝前期
