@@ -17,7 +17,8 @@ export default ({
         sub: true,
         sup: true,
         codetabs: true,
-        imageTitle: true
+        imageTitle: true,
+        katex: true,
       },
       
     },
