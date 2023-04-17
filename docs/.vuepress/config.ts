@@ -19,6 +19,7 @@ export default ({
         codetabs: true,
         imageTitle: true,
         katex: true,
+        mark:true
       },
       
     },

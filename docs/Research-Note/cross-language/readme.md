@@ -10,7 +10,7 @@ tag:
 ## 论文
 ### 静态
 #### [Broadening horizons of multilingual static analysis: semantic summary extraction from C code for JNI program analysis](https://doi.org/10.1145/3324884.3416558)
-**补充问题、翻译的细节（指针？）、与ilea的不同**
+==TODO: 补充问题、翻译的细节（指针？）、与[ilea](#ilea-inter-language-analysis-across-java-and-c)的不同==
 - ASE 20, Sungho Lee(Chungnam National University), Hyogun Lee(KAIST), Sukyoung Ryu(KAIST)
 - 针对JNI互操作。分别对Java和C静态分析：对C进行模块分析，提取与互操作有关的概要，summary包括函数参数、对Java的调用、返回值与参数的关系；然后把summary翻译成Java，整合进去，对Java进行完整的分析；翻译后的C代码保留一些JNI调用，一些支持函数如GetObjectClass，对这类函数进行建模；只支持一定条件下动态绑定，直接看作静态绑定。
 
@@ -26,9 +26,9 @@ tag:
 :::
 
 #### [A Multilanguage Static Analysis of Python Programs with Native C Extensions](https://link.springer.com/10.1007/978-3-030-88806-0_16)
-**补充问题**
+==TODO: 补充问题==
 - SAS 21
-- 一些Python/C常见的bug pattern：![](./fcbfd19e2ed98013da7df603c57fc49f.png)
+- 一些Python/C常见的bug pattern：![](./fcbfd19e2ed98013da7df603c57fc49f.png)·
 - 论文旨在同时静态分析Python和C，并没有对C抽取summary，而是两边一起做数据流分析。论文复用了Python和C的静态分析工具，主要贡献在于描述了跨语言的语义，并且提供了双向的翻译机制：Python的对象如何在C中表示，C的对象如何在Python中表示，以及双向的调用，还有基本数据类型Python long怎么翻译成C long。这样的翻译依靠Python/C API。
 - 实验中，用“选择性”来展现他们工具的能力：工具计算的安全操作数/动态检查的数量。
 
@@ -59,7 +59,7 @@ tag:
 - 和[binding](#finding-and-preventing-bugs-in-javascript-bindings)类似，这篇论文偏安全方向，里面提到了很多跨语言交互的一些细节，但是他们是把它当作一个个可能存在的漏洞提出来的，而不是建立全面的semantic来描述这些行为。感觉有些琐碎了，
 
 #### [Finding and Preventing Bugs in JavaScript Bindings](https://ieeexplore.ieee.org/stampPDF/getPDF.jsp?tp=&arnumber=7958598&ref=&tag=1)
-**补充**
+==todo: 补充==
 
 #### [Ilea: inter-language analysis across java and c](https://dl.acm.org/doi/10.1145/1297105.1297031)
 **补充翻译的细节，与semantic summary extration对照**
@@ -82,7 +82,7 @@ tag:
     - 统一类型系统：Scheme是无类型的，为了实现统一的类型系统以及肿块（禁止访问对方语言的数据），
         - 给Scheme添加TST类型，表示Scheme自己的类型；L表示Scheme在ML中的类型；ML在Scheme中的类型就是TST。
         - 归约规则对对方的类型无知。Scheme->ML：Scheme类型都是TST。转换成ML后的类型取决于这个数据怎么来的，假如是Scheme内部的数据就是L；假如是ML传进去又返回出来的数据，就保留原来的类型$\tau$。
-       - 肿块体现在：**MS(n)和SM(n)不是n（也就是确定的值），也没有把SM(n)、MS(n)变成n的规则**，因此没法参与运算（+/-）。这就像一个tag一样一直跟随着v进行规约（if，λ），直到遇到相反的转换操作。简而言之，**无法将一个语言的数据类型转换为另一个语言的数据类型，如string->char[]**
+       - 肿块体现在：**没有把SM(n)、MS(n)变成n的规则,也没有把SM(λx.e)/MS(λx.e)变为...的规则**，因此没法参与运算（+/-），没法apply。这就像一个tag一样一直跟随着v进行规约（if，λ），直到遇到相反的转换操作。简而言之，**无法将一个语言的数据类型转换为另一个语言的数据类型，如string->char[]**
    - 简单自然嵌入：在肿块嵌入的基础上添加数据类型的转换
        - 对于数字，添加相应的转换操作![](./11f59ec37655e7ea7ec70c0716e67a0a.png)
        - ![](./d727de40163fe1ba0988647c5c272c6e.png)
@@ -101,8 +101,8 @@ tag:
                - 推迟了不好，不好溯源。明明可检查干嘛不检查。
                - ML作为静态类型语言，却让动态类型检查分布到整个程序。
 - Guard分离嵌入：在自然嵌入的基础上，在Scheme一侧引入Guard操作。Guard不进行转换，只进行检查。因此转换操作只需无脑转即可。假如一个数据没有经过guard就转换，会卡住。 ![](./10d6c7ff007b717903f5db28367a7fc4.png)
-    - 要求程序一开始时必须形如：![](./22d15b212c894ea39dd338b1d18c5151.png](en-resource://database/761:1) ![5352e39dbd95c79d9a524359e7f6bc21.png)由此来保证type soundess。
-    - 在ML调用Scheme的函数，为什么要检查参数？简单自然嵌入中![](./5818f55de3e0e481344d3f6c3febc412.png](en-resource://database/753:1)  ![fdb72db856232612e34f4081622f270d.png)$不会对x检查报错啊？
+    - 要求程序一开始时必须形如：![](./22d15b212c894ea39dd338b1d18c5151.png)  ![](5352e39dbd95c79d9a524359e7f6bc21.png) 由此来保证type soundess。
+    - 在ML调用Scheme的函数，为什么要检查参数？简单自然嵌入中![](./5818f55de3e0e481344d3f6c3febc412.png) ![](fdb72db856232612e34f4081622f270d.png) $GSM$不会检查x是不是数字啊？
     - 但若参数x传递一个函数λx.e，t1=t3 \rightarrow t4。GSM要翻译成$λx. GSM^{τ2}(v MSG^{τ1} x)$。也就是带动态检查的Scheme函数，在检查给ML的参数。
     - $G^t$有两个功能：检查它是函数还是number；对于函数还生成带有检查的封装函数：Guard返回值和Guard参数。假如这个参数有朝一日传进来一个ML函数，G参数会再生成一个封装函数：也是Guard参数、Guard返回值。此时Guard参数就是必要的，因为这是传给ML函数的。
     - 对于$G^{(t1 \rightarrow t2) \rightarrow t3}$，不仅检查返回值t3，还要检查参数t1->t2。进一步的，有朝一日，检查参数t1->t2的时候，要检查参数的参数t1，这个参数是要传递给ML的。
@@ -117,7 +117,10 @@ tag:
         - 对于t=int，它是哑的：既不报错，也不生成封装函数。
         - 用于ML->Scheme。
     - 和简单嵌入一样的事：检查和转换不分家，该检查时才检查。
-    
+- 他们证明自然嵌入是可以写成肿块嵌入的。*没看明白*。
+- 异常处理：ML异常处理，Scheme有try-catch
+  - ![](20230417162601.png)
+  - 拓展类型到$\Kappa$。加入$\lota !$，表示用成功/异常当返回值（数字）。这个类型只出现在转换中，不会出现在ML的类型系统中。扩展的类型不仅指定了转换API要转换成什么类型，也指定了怎么（在ML中）处理（Scheme的）异常。    
    
 
 
