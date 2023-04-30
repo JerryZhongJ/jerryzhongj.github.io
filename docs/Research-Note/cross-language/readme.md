@@ -36,6 +36,8 @@ tag:
 #### [The Python/C API: Evolution, Usage Statistics, and Bug Patterns](https://ieeexplore.ieee.org/document/9054835)
 - SANER 20, Mingzhe Hu(USTC), Yu Zhang(USTC)
 - 利用工具从7个项目中提取Python/C API的使用和演变；手动总结了10个bug pattern。
+
+
 #### [Bilingual Problems: Studying the Security Risks Incurred by Native Extensions in Scripting Languages](https://www.semanticscholar.org/paper/Bilingual-Problems%3A-Studying-the-Security-Risks-by-Staicu-Rahaman/681c9dac27366e20aa84fdb4992177dcf2aba9a2)
 - 2021
 - 问题：Python、Javscript、Ruby都允许用其他语言来写extension，而写extension的人可能会犯错，引入一些漏洞。
@@ -56,13 +58,34 @@ tag:
 - 他们的方法是对JavaScript和C分别提取他们的过程内数据流。对于JavaScript，他们要找哪些函数用到了C API，并且根据下面的语法模式（各种脚本语言extension用来注册API的方法）来匹配C函数和API名字。然后，将JavaScript的函数和C的函数的数据流连接起来。对于他们要找的每个漏洞，指定一个sink节点，然后分析从JavaScript的entry node到sink node之间的路径有无sanitizer，有则安全，无则报警。
 ![](./e55c9ad3edb329773d43524f2e8a34c9.png)
 - 他们也推广到过程间分析。他们利用现成的调用图，从上述的vulnerable function开始倒推，用后向数据分析来做def-use分析。
-- 和[binding](#finding-and-preventing-bugs-in-javascript-bindings)类似，这篇论文偏安全方向，里面提到了很多跨语言交互的一些细节，但是他们是把它当作一个个可能存在的漏洞提出来的，而不是建立全面的semantic来描述这些行为。感觉有些琐碎了，
+- 和[binding](#finding-and-preventing-bugs-in-javascript-bindings)类似，这篇论文偏安全方向，里面提到了很多跨语言交互的一些细节，但是他们是把它当作一个个可能存在的漏洞提出来的，而不是建立全面的semantic来描述这些行为。感觉有些琐碎了。
 
 #### [Finding and Preventing Bugs in JavaScript Bindings](https://ieeexplore.ieee.org/stampPDF/getPDF.jsp?tp=&arnumber=7958598&ref=&tag=1)
-==todo: 补充==
+- SP 17
+- 问题：一些Javascript的底层和addon是用C++实现的，写的时候需要用binding code来粘合javascript和C++，翻译数据类型、数据表示、传递异常处理等。binding code容易程序员编写，容易写错，导致：crash、跳过类型、边界检查。binding code可以调用javascript代码。使之更容易被劫持。
+- 贡献：
+  - 总结了三种安全的违反（bug）：crash-safety、type-safety、memory-safety。
+  - 提出检查器来发现上面三种bug，支持多个runtime：nodejs、chrome blink、chrome extension、pdfium。*但应该是面向v8引擎分析*
+  - 把v8引擎api包装成安全的api
+- 本文是安全方向的论文，因此在提及bug的时候总是强调它们是exploitable的或者可能导致什么后果。
+- bugs:
+  - crash-safety: 发生硬crash
+  - type-safety：没有检查类型就使用或者转换
+  - memory-safety：内存访问错误，如数组越界。挑战在于binding code回调javascript函数可能会改变数组长度。
+- Checker：
+  - 用[microchex](https://cseweb.ucsd.edu/~dstefan/cse291-fall16/notes/uchex/)（他们组16年的工作）语法检查器来发现bug。这个工具接受小语法（编程语言语法的一部分），这个小语法以某个特定的分析为导向编写（如空指针分析，那么小语法专注于发现指针解引用和指针赋值）。这个分析是path-sensitive的。这个工具无法进行过程间分析，无法进行别名分析。 
+  - *本质上与其他静态分析没区别，别的静态分析基于AST，它的静态分析基于化简的语法树，边扫描便分析。*
+  - Hard Crash bugs：
+    - assertion：假如ASSERT、CHECK里面是来自javascript的变量就报错。
+    - unsafe-conversion：。。。
+  - type safety：收集没有经过类型检查的参数，假如cast了就报错。
+  - memory-safety：
+    - 依赖隐式转换的内存操作：隐式转换指的是可能隐式地调用`Symbol.toPrimitive`的方法，如`UInt32()`。假如一个值是通过隐式转换得到，则称之为危险值。若危险值出现在`malloc`、`memcpy`就报错。（隐式转换可能被劫持，这样数组长度会改变，内存操作就危险了。但是为啥一定是危险值作内存操作的参数才报错呢？莫名其妙）
+    - PDFium use-after-frees：凡是调用了javascript的函数就认为当前所有指针是可能被free的。
+- 这篇论文只面向binding code进行分析，我觉得并没有“跨语言”，本质上仍是C++程序分析。但本文确实有关跨语言，那3种bugs就是跨语言场景下才存在的bug，所以这是在跨语言场景下对C++进行分析。而且这里的bug并不是指运行时出错，而是我可以手动创造条件（自己编写javascript代码）来触发，所以分析得更加保守。我觉得这篇论文一般。
 
 #### [Ilea: inter-language analysis across java and c](https://dl.acm.org/doi/10.1145/1297105.1297031)
-**补充翻译的细节，与semantic summary extration对照**
+==补充翻译的细节，与[semantic summary extraction](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)对照==
 - OOPSLA 07, Gang Tan (Boston College), Greg Morrisett (Harvard U~)
 - 问题：之前的静态程序分析限定在一个语言中，但是Java中JNI的使用还是很多的。
 - 论文首先讨论了如何给C做规约的问题（如何描述C代码的行为）。其中一种方法是用标记，标记有无副作用、nullable甚至数据流值，但是这种方法过于ad-hoc，不具备可扩展性。他们决定用霍尔逻辑去描述C代码，捕捉运行前-运行后的关系：返回值与参数、运行前的Java堆-运行后的Java堆，抛弃C的执行步骤和C的堆。
@@ -123,8 +146,29 @@ tag:
   - 拓展类型到$\Kappa$。加入$\lota !$，表示用成功/异常当返回值（数字）。这个类型只出现在转换中，不会出现在ML的类型系统中。扩展的类型不仅指定了转换API要转换成什么类型，也指定了怎么（在ML中）处理（Scheme的）异常。
   - Scheme的上下文分为H和E，H表示没有异常处理的上下文，E表示所有上下文。这使得Scheme无法处理由ML返回的异常（当返回值为0）。
    
+#### [JuCify: a step towards Android code unification for enhanced static analysis](https://dl.acm.org/doi/10.1145/3510003.3512766)
 
+==TODO: 与[semantic extraction](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)对比==
 
+- ICSE 2022
+- 问题：恶意软件可能在Android的native code里面。当前分析native code的方法是临时的，对bytecode和native code的分开分析，然后再把结果统合在一起 *（JN-SANF？DroidNative？NativeGuard？TaintArt？）*，缺少统一模型。
+- 贡献：
+  - Jucify：生成包含native代码的统一Jimple表示。
+  - Jucify直接在**二进制层面**进行分析：bytecode和native binaries。
+- 生成统一的调用图：
+  1. 构建native callgraph。用ANGR，二进制分析工具。
+  2. 提取双向的调用信息。
+     1. 提取bytecode方法类型、签名。ANDROGUARD。
+     2. 提取entry方法（用`native`声明的方法）的调用。entry方法是指native函数被bytecode调用。
+     3. 把entry方法（bytecode）和entry函数（native）匹配起来。既包含静态注册（函数名满足命名规范）和动态注册（符号执行）。
+     4. 提取exit方法调用。exit方法是指bytecode的方法被native调用。这里是获取entry-exit对，从entry函数开始符号执行，从二进制码中（ARM）找到函数调用和返回，模拟函数调用。
+  3. 修剪native callgraph，保留从entry可达的部分。把它转换为soot形式。
+  4. 利用native-bytecode（host language）相互调用的信息联合两边的callgraph。
+- 用Jimple来表示bytecode和native code
+  - 用DummyBinaryClass来表示native代码，native函数就是它的方法。
+  - bytecode对entry method的调用改成对DummyBinaryClass方法的调用。
+  - native code转Jimple是围绕返回值和exit调用的。抛弃了数据流图，排列组合来枚举exit参数和返回值。在函数签名的参数声明、可以推导的其他变量（exit方法返回值的结果变量，调用exit方法的接收对象等）枚举。保守估计。
+  - 本质上是对native代码建模，但是相当粗糙。
     
 
        
@@ -152,7 +196,21 @@ tag:
     3. 用元模型来抽象不同语言的执行，和具体的动态执行本身是矛盾的。
 
 ## 资源
+
+
+
+
+
+
 ### 工具
+
+
+
+
+
+
+
+
 ### 数据集
 
 ----
