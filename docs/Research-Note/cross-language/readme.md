@@ -26,10 +26,17 @@ tag:
 :::
 
 #### [A Multilanguage Static Analysis of Python Programs with Native C Extensions](https://link.springer.com/10.1007/978-3-030-88806-0_16)
-==TODO: 补充问题==
 - SAS 21
+- 问题：Python代码往往依赖native C代码。目前分析方法用stub来给C代码建模，但是要么耗时要么不准确。Python和C交互可能带来的问题：C没有异常处理；Python和C得数据表示不同，C存在溢出问题但Python对此无知。
+- 贡献：
+  - 设计了Python/C的语义
+  - Mopsa：同时对Python和C进行流敏感、上下文敏感数据流分析，基于两边现成的分析工具，检测C和Python的运行时错误
+- 本文不采用自底向上地构建summary的方法，声称：
+  - 分析动态类型语言不用上下文敏感很难讲分析得精确。（这和动态类型有关吗？）
+  - 上下文敏感分析很难自底向上地分析。（为啥？）
+  - C代码对Python堆已知是有必要的，方便检查指针错误，和分析副作用。
 - 一些Python/C常见的bug pattern：![](./fcbfd19e2ed98013da7df603c57fc49f.png)·
-- 论文旨在同时静态分析Python和C，并没有对C抽取summary，而是两边一起做数据流分析。论文复用了Python和C的静态分析工具，主要贡献在于描述了跨语言的语义，并且提供了双向的翻译机制：Python的对象如何在C中表示，C的对象如何在Python中表示，以及双向的调用，还有基本数据类型Python long怎么翻译成C long。这样的翻译依靠Python/C API。
+- 主要贡献在于描述了跨语言的语义，并且提供了双向的翻译机制：Python的对象如何在C中表示，C的对象如何在Python中表示，以及双向的调用，还有基本数据类型Python long怎么翻译成C long。这样的翻译依靠Python/C API。
 - 实验中，用“选择性”来展现他们工具的能力：工具计算的安全操作数/动态检查的数量。
 
 
