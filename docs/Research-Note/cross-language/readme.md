@@ -5,7 +5,13 @@ category:
 tag: 
   - 程序分析
 ---
-
+::: tip
+看论文要关注：
+1. **问题**。不要只看作者描述的问题，往往包装得天花乱坠，要看他落地解决了哪些。
+2. **假设**。看似结果很好，但是有很多前提条件。要发现文章隐含的假设就更难了。
+3. **贡献**。一两句话的概括。
+4. **方法/创新点**。有些文章形式化写得很牛逼，一实现就很简单。此时的贡献就是形式化本身，而不是方法了。
+:::
 
 ## 论文
 ### 静态
@@ -32,11 +38,30 @@ tag:
   - 设计了Python/C的语义
   - Mopsa：同时对Python和C进行流敏感、上下文敏感数据流分析，基于两边现成的分析工具，检测C和Python的运行时错误
 - 本文不采用自底向上地构建summary的方法，声称：
-  - 分析动态类型语言不用上下文敏感很难讲分析得精确。（这和动态类型有关吗？）
-  - 上下文敏感分析很难自底向上地分析。（为啥？）
+  - 分析动态类型语言不用上下文敏感很难讲分析得精确。*（这和动态类型有关吗？）*
+  - 上下文敏感分析很难自底向上地分析。*（为啥？）*
   - C代码对Python堆已知是有必要的，方便检查指针错误，和分析副作用。
-- 一些Python/C常见的bug pattern：![](./fcbfd19e2ed98013da7df603c57fc49f.png)·
-- 主要贡献在于描述了跨语言的语义，并且提供了双向的翻译机制：Python的对象如何在C中表示，C的对象如何在Python中表示，以及双向的调用，还有基本数据类型Python long怎么翻译成C long。这样的翻译依靠Python/C API。
+- 一些Python/C常见的[bug patterns](#the-pythonc-api-evolution-usage-statistics-and-bug-patterns)：
+  - 返回null但是没有设置exception flag。
+  - Python/C 数据类型转换错误（`PArg_ParseTuple`、`PyLong_FromLong`）
+  - Python整型转换C整型导致溢出。
+  - 引用计数错误（不解决）
+- Python/C语义：![](./2023-05-08%20211609.png)
+  - 假设：在C中，Python内建的对象只能通过API访问。C用API访问内建对象视作回调Python函数，也就是现在Python端读取，再使用某种Python $\rightarrow$ C转换语义。
+  - Python状态：一切皆对象；堆就是地址$\rightarrow$对象，环境就是变量$\rightarrow$地址。
+  - C状态：
+    - 数据可以在堆中，也可以在栈中。表现为Cells，Base就是数据的基地址。
+    - 指针不只是堆地址，还可以偏移。
+    - 环境是每一个成员$\rightarrow$值
+    - 堆用来标识内存有多大，数据是C内部（malloc）的还是Python（PyAlloc）的。C和Python共享Addr。
+  - boundary function：翻译Python对象。Python对象同时在C和Python中被表示，如何把一边的表示翻译成另一边的表示。
+    - Python$\rightarrow$C：先翻译对象的类型（也是一个对象），然后在C堆中把Python对象（表示为一个地址）标记为`PyAlloc`大小为`PyObjectSize`。
+    - C$\rightarrow$Python：如实地返回地址即可。
+    - *对象的创建怎么实现？实际实现中Addr怎么表示*
+  - Call：![](./2023-05-08%20220724.png)
+    - C$\rightarrow$Python：函数就是C形式。检查第一个参数是否匹配函数绑定的类型；打包参数、翻译参数Python$\rightarrow$C；检查返回值是不是NULL，翻译返回值。
+    - Python$\rightarrow$C：函数是C中的Python对象。翻译函数，翻译参数，在Python语义中调用。等等。
+    - *C函数怎么在Python中表示？CFunc哪来的？*
 - 实验中，用“选择性”来展现他们工具的能力：工具计算的安全操作数/动态检查的数量。
 
 
