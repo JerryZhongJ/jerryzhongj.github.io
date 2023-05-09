@@ -16,7 +16,9 @@ tag:
 ## 论文
 ### 静态
 #### [Broadening horizons of multilingual static analysis: semantic summary extraction from C code for JNI program analysis](https://doi.org/10.1145/3324884.3416558)
-==TODO: 补充问题、翻译的细节（指针？）、与[ilea](#ilea-inter-language-analysis-across-java-and-c)的不同==
+:::warning TODO
+补充问题、翻译的细节（指针？）、与[ilea](#ilea-inter-language-analysis-across-java-and-c)的不同
+:::
 - ASE 20, Sungho Lee(Chungnam National University), Hyogun Lee(KAIST), Sukyoung Ryu(KAIST)
 - 针对JNI互操作。分别对Java和C静态分析：对C进行模块分析，提取与互操作有关的概要，summary包括函数参数、对Java的调用、返回值与参数的关系；然后把summary翻译成Java，整合进去，对Java进行完整的分析；翻译后的C代码保留一些JNI调用，一些支持函数如GetObjectClass，对这类函数进行建模；只支持一定条件下动态绑定，直接看作静态绑定。
 
@@ -36,7 +38,7 @@ tag:
 - 问题：Python代码往往依赖native C代码。目前分析方法用stub来给C代码建模，但是要么耗时要么不准确。Python和C交互可能带来的问题：C没有异常处理；Python和C得数据表示不同，C存在溢出问题但Python对此无知。
 - 贡献：
   - 设计了Python/C的语义
-  - Mopsa：同时对Python和C进行流敏感、上下文敏感数据流分析，基于两边现成的分析工具，检测C和Python的运行时错误
+  - 在Mopsa下实现了对Python/C跨语言的流敏感、上下文敏感数据流分析。基于Mopsa现成的Python和C分析工具，检测C和Python的运行时错误
 - 本文不采用自底向上地构建summary的方法，声称：
   - 分析动态类型语言不用上下文敏感很难讲分析得精确。*（这和动态类型有关吗？）*
   - 上下文敏感分析很难自底向上地分析。*（为啥？）*
@@ -54,14 +56,21 @@ tag:
     - 指针不只是堆地址，还可以偏移。
     - 环境是每一个成员$\rightarrow$值
     - 堆用来标识内存有多大，数据是C内部（malloc）的还是Python（PyAlloc）的。C和Python共享Addr。
-  - boundary function：翻译Python对象。Python对象同时在C和Python中被表示，如何把一边的表示翻译成另一边的表示。
+    - 对于Python对象，存在两个视角：Python视角下一个对象有基本类型（函数、类、实例、内建）以及它们的域；在C视角下，Python对象有成员。
+  - boundary function：在Python对象的不同视角之间进行转换。Python对象同时在C和Python中被表示，如何把一边的表示翻译成另一边的表示。这种转换是抽象的，并不是具体的程序行为。
     - Python$\rightarrow$C：先翻译对象的类型（也是一个对象），然后在C堆中把Python对象（表示为一个地址）标记为`PyAlloc`大小为`PyObjectSize`。
     - C$\rightarrow$Python：如实地返回地址即可。
-    - *对象的创建怎么实现？实际实现中Addr怎么表示*
+    - *在C中可以注册类的方法，也就是Python视角下对象的域，这怎么实现？*
   - Call：![](./2023-05-08%20220724.png)
     - C$\rightarrow$Python：函数就是C形式。检查第一个参数是否匹配函数绑定的类型；打包参数、翻译参数Python$\rightarrow$C；检查返回值是不是NULL，翻译返回值。
     - Python$\rightarrow$C：函数是C中的Python对象。翻译函数，翻译参数，在Python语义中调用。等等。
     - *C函数怎么在Python中表示？CFunc哪来的？*
+  - 异常C$\rightarrow$Python：在C中，调用`PyErr_SetNone`，
+  - builtin value转换: ![](./2023-05-09%20113317.png)
+    - Long Python$\rightarrow$C: `PyLong_AsLong`把C中Python int对象转换为C int。方法为先翻译C中Python对象为Python表示，检查类型，检查取值，直接获取取值。
+    - Long C$\rightarrow$Python: `PyLong_FromLong`C int转换为C中的Python int对象。方式为在Python语义中调用`int(...)`，再翻译为C。
+    - 转换都是在C的语义下完成的，因为binding code就是用C写的。这个转换有具体的转换行为（代码中调用一个Python转换API）,将C int转换为Python对象。
+  - 抽象语义：把上述的Number和Addr换成抽象表示。Number可以换成interval abstraction、octagon abstraction。Addr可以换成callsite、recency。
 - 实验中，用“选择性”来展现他们工具的能力：工具计算的安全操作数/动态检查的数量。
 
 
@@ -117,7 +126,9 @@ tag:
 - 这篇论文只面向binding code进行分析，我觉得并没有“跨语言”，本质上仍是C++程序分析。但本文确实有关跨语言，那3种bugs就是跨语言场景下才存在的bug，所以这是在跨语言场景下对C++进行分析。而且这里的bug并不是指运行时出错，而是我可以手动创造条件（自己编写javascript代码）来触发，所以分析得更加保守。我觉得这篇论文一般。
 
 #### [Ilea: inter-language analysis across java and c](https://dl.acm.org/doi/10.1145/1297105.1297031)
-==补充翻译的细节，与[semantic summary extraction](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)对照==
+::: warning TODO
+补充翻译的细节，与[semantic summary extraction](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)对照
+:::
 - OOPSLA 07, Gang Tan (Boston College), Greg Morrisett (Harvard U~)
 - 问题：之前的静态程序分析限定在一个语言中，但是Java中JNI的使用还是很多的。
 - 论文首先讨论了如何给C做规约的问题（如何描述C代码的行为）。其中一种方法是用标记，标记有无副作用、nullable甚至数据流值，但是这种方法过于ad-hoc，不具备可扩展性。他们决定用霍尔逻辑去描述C代码，捕捉运行前-运行后的关系：返回值与参数、运行前的Java堆-运行后的Java堆，抛弃C的执行步骤和C的堆。
@@ -180,7 +191,9 @@ tag:
    
 #### [JuCify: a step towards Android code unification for enhanced static analysis](https://dl.acm.org/doi/10.1145/3510003.3512766)
 
-==TODO: 与[semantic extraction](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)对比==
+:::warning TODO
+与[semantic extraction](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)对比
+:::
 
 - ICSE 2022
 - 问题：恶意软件可能在Android的native code里面。当前分析native code的方法是临时的，对bytecode和native code的分开分析，然后再把结果统合在一起 *（JN-SANF？DroidNative？NativeGuard？TaintArt？）*，缺少统一模型。
