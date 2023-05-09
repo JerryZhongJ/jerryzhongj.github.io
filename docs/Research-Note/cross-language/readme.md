@@ -48,7 +48,7 @@ tag:
   - Python/C 数据类型转换错误（`PArg_ParseTuple`、`PyLong_FromLong`）
   - Python整型转换C整型导致溢出。
   - 引用计数错误（不解决）
-- Python/C语义：![](./2023-05-08%20211609.png)
+- Python/C语义：![](./2023-05-08-211609.png)
   - 假设：在C中，Python内建的对象只能通过API访问。C用API访问内建对象视作回调Python函数，也就是现在Python端读取，再使用某种Python $\rightarrow$ C转换语义。
   - Python状态：一切皆对象；堆就是地址$\rightarrow$对象，环境就是变量$\rightarrow$地址。
   - C状态：
@@ -61,12 +61,12 @@ tag:
     - Python$\rightarrow$C：先翻译对象的类型（也是一个对象），然后在C堆中把Python对象（表示为一个地址）标记为`PyAlloc`大小为`PyObjectSize`。
     - C$\rightarrow$Python：如实地返回地址即可。
     - *在C中可以注册类的方法，也就是Python视角下对象的域，这怎么实现？*
-  - Call：![](./2023-05-08%20220724.png)
+  - Call：![](./2023-05-08-220724.png)
     - C$\rightarrow$Python：函数就是C形式。检查第一个参数是否匹配函数绑定的类型；打包参数、翻译参数Python$\rightarrow$C；检查返回值是不是NULL，翻译返回值。
     - Python$\rightarrow$C：函数是C中的Python对象。翻译函数，翻译参数，在Python语义中调用。等等。
     - *C函数怎么在Python中表示？CFunc哪来的？*
   - 异常C$\rightarrow$Python：在C中，调用`PyErr_SetNone`，
-  - builtin value转换: ![](./2023-05-09%20113317.png)
+  - builtin value转换: ![](./2023-05-09-113317.png)
     - Long Python$\rightarrow$C: `PyLong_AsLong`把C中Python int对象转换为C int。方法为先翻译C中Python对象为Python表示，检查类型，检查取值，直接获取取值。
     - Long C$\rightarrow$Python: `PyLong_FromLong`C int转换为C中的Python int对象。方式为在Python语义中调用`int(...)`，再翻译为C。
     - 转换都是在C的语义下完成的，因为binding code就是用C写的。这个转换有具体的转换行为（代码中调用一个Python转换API）,将C int转换为Python对象。
