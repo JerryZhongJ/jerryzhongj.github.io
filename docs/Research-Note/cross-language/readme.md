@@ -43,6 +43,10 @@ tag:
   - 对类C语言的语义摘要提出形式化抽象语义
   - 实现了JNI分析器
 - **方法**：
+  - 类C语言语法：![](./2023-05-10-202241.png)
+    - 5中statements：load、store、call、foreign call、return
+    - 4中表达式：variable、variable reference、field access（返回地址）、struct creation、constant
+    - 3种类型：pointer、struct、primitive
   - 模块分析客语言，提取摘要：
     - 模块化分析：对每一个函数抽象其输出状态和输入状态的关系。
     - 状态：抽象堆+外部调用
