@@ -13,14 +13,46 @@ tag:
 4. **方法/创新点**。有些文章形式化写得很牛逼，一实现就很简单。此时的贡献就是形式化本身，而不是方法了。
 :::
 
+## 名词定义：一些摘抄
+### 跨语言/多语言（Cross-Language/Multilingaul）
+[broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
+> 多语言程序可以被分为主语言（host language）和客语言（guest language），主语言是提供FFI的一方，如JNI中的Java。两个通过外部函数接口（foreign function interface）交互，实现一个语言可以调用另外一个语言的函数并且交换数据。Python、Rust、Julia提供了语言级别的FFIs，Java和JavaScript提供了特定运行时环境的FFIs，如JNI和Node.js C++ addons。多语言程序可以利用不同语言的特性，对于开发者而言，利用多语言可以超过只用一种语言的表达能力。常见的是结合高阶语言和低阶语言。
+
+### 跨语言分析（Cross-language Analysis）
+[broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
+> 大多数静态分析针对一种语言，并且忽略了对外部函数的调用，因此产生不完整、不可靠的分析结果。WALA能够分析多种语言，但是不能分析由两种语言共同写成的程序。一些工作利用WALA能够分析用Java和JavaScript写的Android hybrid app。
+>
+
+### 语言边界（Language Boundary）
+[broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
+> 显式的语言边界：调用外部函数和调用本语言的函数有语法上的不同，如JNI中Java中声明外部函数会使用关键字`native`。Go把所有的C函数放到`C`模块里面。等等。
+> 隐式边界：把语言边界隐藏起来。如Python，调用C写成的模块与其他模块没有区别。
+
+
 ## 论文
 ### 静态
 #### [Broadening horizons of multilingual static analysis: semantic summary extraction from C code for JNI program analysis](https://doi.org/10.1145/3324884.3416558)
 :::warning TODO
 补充问题、翻译的细节（指针？）、与[ilea](#ilea-inter-language-analysis-across-java-and-c)的不同
 :::
+
 - ASE 20, Sungho Lee(Chungnam National University), Hyogun Lee(KAIST), Sukyoung Ryu(KAIST)
-- 针对JNI互操作。分别对Java和C静态分析：对C进行模块分析，提取与互操作有关的概要，summary包括函数参数、对Java的调用、返回值与参数的关系；然后把summary翻译成Java，整合进去，对Java进行完整的分析；翻译后的C代码保留一些JNI调用，一些支持函数如GetObjectClass，对这类函数进行建模；只支持一定条件下动态绑定，直接看作静态绑定。
+- **问题**：针对跨语言的静态分析仍然不足。一些静态分析工具直接忽略外部函数调用，一些工具能分析多种语言但不能同时分析，一些工具能够分析Android hybrid app但仅限于这种情况，不具备可扩展性。
+- **贡献**：
+  - 尝试提出通用的多语言分析方法（如题目所说）：对客语言进行模块化分析提取摘要，只保留互操作有关的信息；对主语言（提供FFI的一方，Java）采用全程序分析。主语言分析对客语言的语义无知，只知道FFI语义和客语言的摘要。
+  - 对类C语言的语义摘要提出形式化抽象语义
+  - 实现了JNI分析器
+- **方法**：
+  - 模块分析客语言，提取摘要：
+    - 模块化分析：对每一个函数抽象其输出状态和输入状态的关系。
+    - 状态：抽象堆+外部调用
+    - *状态怎么表示？怎么进行模块化分析？*
+  - 生成摘要：参数、返回语句、外部调用
+  - 翻译摘要至主语言、插入代码
+  - 主语言分析：
+- 两种bugs：
+  - 错误调用外部函数：或运行时错误或未定义行为。本文能够检查错误的绑定和错误的C调用Java方法。
+  - 错误处理Java异常：
 
 #### [Towards Understanding and Reasoning About Android Interoperations](https://ieeexplore.ieee.org/document/8811927/)
 - ICSE 19, Sora Bae(KAIST), Sungho Lee(KAIST), Sukyoung Ryu(KAIST)
@@ -129,10 +161,11 @@ tag:
 ::: warning TODO
 补充翻译的细节，与[semantic summary extraction](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)对照
 :::
+
 - OOPSLA 07, Gang Tan (Boston College), Greg Morrisett (Harvard U~)
-- 问题：之前的静态程序分析限定在一个语言中，但是Java中JNI的使用还是很多的。
+- **问题**：之前的静态程序分析限定在一个语言中，但是Java中JNI的使用还是很多的。
 - 论文首先讨论了如何给C做规约的问题（如何描述C代码的行为）。其中一种方法是用标记，标记有无副作用、nullable甚至数据流值，但是这种方法过于ad-hoc，不具备可扩展性。他们决定用霍尔逻辑去描述C代码，捕捉运行前-运行后的关系：返回值与参数、运行前的Java堆-运行后的Java堆，抛弃C的执行步骤和C的堆。
-- 为了同时分析Java和C，他们选择把C代码翻译成Java虚拟机语言（JVML），具体来是扩展的JVML。
+- **方法**：为了同时分析Java和C，他们选择把C代码翻译成Java虚拟机语言（JVML），具体来是扩展的JVML。
 
 #### [Operational Semantics for Multi-Language Programs](https://dl.acm.org/doi/10.1145/1190216.1190220)
 - POPL 07, Jacob Matthews (U~ of Chicago), Robert Bruce Findler
@@ -223,7 +256,9 @@ tag:
 
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
-**把问题、贡献、方法补全**
+:::warning TODO
+把问题、贡献、方法补全
+:::
 - FSE 15
 - 动态分析给C建模。运行C函数，捕获traces，通过traces来建模。
 
@@ -240,20 +275,18 @@ tag:
     2. IR转换需要大量工程上的工作，并不实际。LLVM提供了统一的IR，但是很多语言的前端却缺少维护。
     3. 用元模型来抽象不同语言的执行，和具体的动态执行本身是矛盾的。
 
+
+## 研究组
+
+### [Gang Tan]()
+
+### [Wen Li]()
+
+
 ## 资源
 
 
-
-
-
-
 ### 工具
-
-
-
-
-
-
 
 
 ### 数据集
