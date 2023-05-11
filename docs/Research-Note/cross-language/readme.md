@@ -5,9 +5,10 @@ category:
 tag: 
   - 程序分析
 ---
-::: tip
-看论文要关注：
-1. **问题**。不要只看作者描述的问题，往往包装得天花乱坠，要看他落地解决了哪些。
+::: tip 看论文要关注
+1. **问题**:
+   1. 不要只看作者描述的问题，往往包装得天花乱坠，要看他落地解决了哪些。
+   2. 定位：同样是静态分析，有些是面向开发者的（针对源码分析），有一些是第三方、软件平台（无法获取源代码、针对二进制分析）
 2. **假设**。看似结果很好，但是有很多前提条件。要发现文章隐含的假设就更难了。
 3. **贡献**。一两句话的概括。
 4. **方法/创新点**。有些文章形式化写得很牛逼，一实现就很简单。此时的贡献就是形式化本身，而不是方法了。
@@ -16,12 +17,22 @@ tag:
 ## 名词定义：一些摘抄
 ### 跨语言/多语言（Cross-Language/Multilingaul）
 [broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
-> 多语言程序可以被分为主语言（host language）和客语言（guest language），主语言是提供FFI的一方，如JNI中的Java。两个通过外部函数接口（foreign function interface）交互，实现一个语言可以调用另外一个语言的函数并且交换数据。Python、Rust、Julia提供了语言级别的FFIs，Java和JavaScript提供了特定运行时环境的FFIs，如JNI和Node.js C++ addons。多语言程序可以利用不同语言的特性，对于开发者而言，利用多语言可以超过只用一种语言的表达能力。常见的是结合高阶语言和低阶语言。
+> 多语言程序可以被分为**主语言**（host language）和**客语言**（guest language），主语言是提供FFI的一方，如JNI中的Java。两个通过外部函数接口（foreign function interface）交互，实现一个语言可以调用另外一个语言的函数并且交换数据。Python、Rust、Julia提供了语言级别的FFIs，Java和JavaScript提供了特定运行时环境的FFIs，如JNI和Node.js C++ addons。多语言程序可以利用不同语言的特性，对于开发者而言，利用多语言可以超过只用一种语言的表达能力。常见的是结合高阶语言和低阶语言。
+
+[JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)
+> 安卓允许开发者使用**native语言**来实现程序的一部分
+> **native code**
+
+[Vulnerability Proneness](#on-the-vulnerability-proneness-of-multilingual-code)
+> 研究表明**用多种语言来写软件**是主导的。
 
 ### 跨语言分析（Cross-language Analysis）
 [broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
 > 大多数静态分析针对一种语言，并且忽略了对外部函数的调用，因此产生不完整、不可靠的分析结果。WALA能够分析多种语言，但是不能分析由两种语言共同写成的程序。一些工作利用WALA能够分析用Java和JavaScript写的Android hybrid app。
->
+
+[JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)
+> 当**遇到native方法调用**，现有的数据流分析要么用保守的模型，要么忽略了native调用带来的副作用。
+> 设计一个可以**穿越语言边界跟踪数据流**的数据流分析是当务之急。
 
 ### 语言边界（Language Boundary）
 [broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
@@ -244,8 +255,8 @@ tag:
 :::
 
 - ICSE 2022
-- 问题：恶意软件可能在Android的native code里面。当前分析native code的方法是临时的，对bytecode和native code的分开分析，然后再把结果统合在一起 *（JN-SANF？DroidNative？NativeGuard？TaintArt？）*，缺少统一模型。
-- 贡献：
+- **问题**：恶意软件可能在Android的native code里面。当前分析native code的方法是临时的，对bytecode和native code的分开分析，然后再把结果统合在一起 *（JN-SANF？DroidNative？NativeGuard？TaintArt？）*，缺少统一模型。
+- **贡献**：
   - Jucify：生成包含native代码的统一Jimple表示。
   - Jucify直接在**二进制层面**进行分析：bytecode和native binaries。
 - 生成统一的调用图：
@@ -263,11 +274,48 @@ tag:
   - native code转Jimple是围绕返回值和exit调用的。抛弃了数据流图，排列组合来枚举exit参数和返回值。在函数签名的参数声明、可以推导的其他变量（exit方法返回值的结果变量，调用exit方法的接收对象等）枚举。保守估计。
   - 本质上是对native代码建模，但是相当粗糙。
     
-
+#### [JN-SAF: Precise and Efficient NDK/JNI-aware Inter-language Static Analysis Framework for Security Vetting of Android Applications with Native Code](https://dl.acm.org/doi/10.1145/3243734.3243835)
+- CCS 18, Fengguo Wei, Xinming Ou(U~ of South Florida), Xingwei Lin, Ting Chen, Xiaosong Zhang(U~ of Electronic Science and Technology of China)
+- **问题**：Android的native code有安全隐患，可能泄漏敏感信息或者利用漏洞。缺乏语言间的数据流分析。
+- **贡献**：
+  - 基于摘要、自底向上数据流分析
+  - 统一的堆操作
+  - 给Native Develpment Kit（NDK）、JNI建模，让二进制分析工具能够分析native code。
+  - 这里的native code是**二进制层面**的。
+  - JN-SAF：跨语言数据流跟踪，能够找到跨语言安全问题。
        
-       
-    
+#### [On the Vulnerability Proneness of Multilingual Code](https://doi.org/10.1145/3540250.3549173)
+:::warning TODO
+补全方法
+:::
 
+- ESEC/FSE 22, Wen Li, Haipeng Cai(Washington State U~), Li Li(Monash U~)
+- **概述**：本文是对多语言项目的实证研究，旨在发现多语言的脆弱（proneness to vulnerability）和语言选择的关系。他们发现和语言边界的接口有很大关系。
+
+#### [Cross-language Android permission specification](https://dl.acm.org/doi/10.1145/3540250.3549142)
+:::warning TODO
+补全方法
+:::
+- ESEC/FSE 22, Chaoran Li, Sheng Wen, 
+Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ of Adelaide), Minhui Xue, Muhammad Ejaz Ahmed, Seyit Camtepe(CSIRO’s Data61)
+- **问题**：Android一些敏感API会要求权限，但是官方没有给出这样的清单说什么API会请求什么权限。已经有研究者扫描呢API框架给出这样的映射，但是对native library（C/C++）却没有。
+- **贡献**：
+  - NatiDroid：跨语言**控制流**分析
+  - 提取API-permissinos映射，分析“过度提权”漏洞。
+- **方法**：
+  - 生成中间代码（.jar/Clang Complie commands）
+  - 结合跨语言API，识别入口
+  - 构建跨语言控制流图，提取映射
+- 实现
+  - 基于SOOT和CLANG分析框架
+
+#### [Finding Reference-Counting Errors in Python/C Programs with Affine Analysis](http://link.springer.com/10.1007/978-3-662-44202-9_4)
+- ECOOP 2014, Siliang Li, Gang Tan(Lehigh U~)
+- **问题**：Python运行时无法管理native模块对Python对象的引用，native模块需要手动修改引用计数。
+- **贡献**：
+  - Pungi：用静态分析来识别Python native C模块中的引用计数错误。
+  - 对native模块仿射抽象（affine abstraction）得到仿射程序：放射程序中的赋值右手边只能是仿射表达式（$a_0+\sum_{i=1}^na_ix_i$）。
+- 本文不算做跨语言分析，因为它没有处理语言边界问题，但是这是一个在跨语言场景下的程序分析问题。
 
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
@@ -295,7 +343,7 @@ tag:
 
 ### [Gang Tan]()
 
-### [Wen Li]()
+### [HaiPeng Cai]()
 
 
 ## 资源
