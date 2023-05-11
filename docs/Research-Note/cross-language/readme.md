@@ -43,17 +43,28 @@ tag:
   - 对类C语言的语义摘要提出形式化抽象语义
   - 实现了JNI分析器
 - **方法**：
-  - 类C语言语法：![](./2023-05-10-202241.png)
+  - 类C语言语法：![](./2023-05-10-202241.png) ![](./2023-05-11-112923.png)
     - 5中statements：load、store、call、foreign call、return
     - 4中表达式：variable、variable reference、field access（返回地址）、struct creation、constant
     - 3种类型：pointer、struct、primitive
-  - 模块分析客语言，提取摘要：
-    - 模块化分析：对每一个函数抽象其输出状态和输入状态的关系。
-    - 状态：抽象堆+外部调用
-    - *状态怎么表示？怎么进行模块化分析？*
-  - 生成摘要：参数、返回语句、外部调用
-  - 翻译摘要至主语言、插入代码
+  - 模块化分析客语言：![](./2023-05-11-112801.png) 
+    - 堆：地址（normal、symbolic） $\rightarrow$(value, constraint)。与其他抽象语义不同，这里没有变量和内存地址的区别，全都统一成地址，因为一个变量也是可以被指向的。
+    - value：normal location（变量所在地址）、symbolic location、常量、结构体
+    - constraint：在heap map中用来表示两个地址何时指向同一个值，假如指向同一个值就不用两个symbolic location来表示，指向一个symbolic location就好。这样做的好处是，可以流敏感分析。否则我们一开始就把它们看作两个symbolic location看待，……。
+    - 输入状态包括：parameter enviroment X initial heap
+    - 输出状态包括：final heap X foreign function call log。
+    - parameter enviroment：一个参数指向一个symbolic location，假如参数是指针则symbolic location再指向一个symbolic location。
+    - initial heap：两两讨论symbolic location是否相同，是就指向同一个。
+    - foreign function call：callsites、返回值的symbolic location、实参变量、heap快照。这里的foreign function根本不是指在Java定义的方法，就是FFI。
+  - 生成摘要：参数、语句、返回值
+    - 语句：外部调用、分支、$\phi$
+    - $\phi$：
+  - 翻译摘要至主语言（bytecode）、插入代码
   - 主语言分析：
+    - 给JNI建模，例如`GetObjectClass`、`GetMethodID`、`CallObjectMethod`。
+  - 实现：
+    - 摘要提取：Infer，C和C++的模块化分析框架。
+    - Java分析：FlowDroid，基于Soot的Java/Android静态分析器
 - 两种bugs：
   - 错误调用外部函数：或运行时错误或未定义行为。本文能够检查错误的绑定和错误的C调用Java方法。
   - 错误处理Java异常：
