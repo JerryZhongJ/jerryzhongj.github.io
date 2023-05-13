@@ -21,10 +21,15 @@ tag:
 
 [JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)
 > 安卓允许开发者使用**native语言**来实现程序的一部分
+> 
 > **native code**
 
 [Vulnerability Proneness](#on-the-vulnerability-proneness-of-multilingual-code)
 > 研究表明**用多种语言来写软件**是主导的。
+>
+
+[Python/C](#a-multilanguage-static-analysis-of-python-programs-with-native-c-extensions)
+> 多语言编程使得开发者可以复用其他语言写的库。
 
 ### 跨语言分析（Cross-language Analysis）
 [broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
@@ -32,19 +37,24 @@ tag:
 
 [JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)
 > 当**遇到native方法调用**，现有的数据流分析要么用保守的模型，要么忽略了native调用带来的副作用。
+> 
 > 设计一个可以**穿越语言边界跟踪数据流**的数据流分析是当务之急。
 
 ### 语言边界（Language Boundary）
 [broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
 > 显式的语言边界：调用外部函数和调用本语言的函数有语法上的不同，如JNI中Java中声明外部函数会使用关键字`native`。Go把所有的C函数放到`C`模块里面。等等。
+> 
 > 隐式边界：把语言边界隐藏起来。如Python，调用C写成的模块与其他模块没有区别。
+
+[Python/C](#a-multilanguage-static-analysis-of-python-programs-with-native-c-extensions)
+> 主语言可以通过接口调用客语言，这个接口被称之为**语言边界**。
 
 
 ## 论文
 ### 静态
 #### [Broadening horizons of multilingual static analysis: semantic summary extraction from C code for JNI program analysis](https://doi.org/10.1145/3324884.3416558)
 :::warning TODO
-补充问题、翻译的细节（指针？）、与[ilea](#ilea-inter-language-analysis-across-java-and-c)的不同
+补充：与[ilea](#ilea-inter-language-analysis-across-java-and-c)对比
 :::
 
 - ASE 20, Sungho Lee(Chungnam National University), Hyogun Lee(KAIST), Sukyoung Ryu(KAIST)
@@ -57,8 +67,8 @@ tag:
   - 类C语言语法：![](./2023-05-10-202241.png) ![](./2023-05-11-112923.png)
     - 5中statements：load、store、call、foreign call、return
     - 4中表达式：variable、variable reference、field access（返回地址）、struct creation、constant
-    - 3种类型：pointer、struct、primitive
-  - 模块化分析客语言：![](./2023-05-11-112801.png) 
+    - 3种类型：pointer、struct、primitive。比如Java的对象`jobject`是primitive type。
+  - 模块化分析客语言：对每个函数提取输入和输出状态之间的关系![](./2023-05-11-112801.png) 
     - 堆：地址（normal、symbolic） $\rightarrow$(value, constraint)。与其他抽象语义不同，这里没有变量和内存地址的区别，全都统一成地址，因为一个变量也是可以被指向的。
     - value：normal location（变量所在地址）、symbolic location、常量、结构体
     - constraint：在heap map中用来表示两个地址何时指向同一个值，假如指向同一个值就不用两个symbolic location来表示，指向一个symbolic location就好。这样做的好处是，可以流敏感分析。否则我们一开始就把它们看作两个symbolic location看待，……。
@@ -92,11 +102,14 @@ tag:
 :::
 
 #### [A Multilanguage Static Analysis of Python Programs with Native C Extensions](https://link.springer.com/10.1007/978-3-030-88806-0_16)
-- SAS 21
+- SAS 21, Raphaël Monat, Abdelraouf Ouadjaout, Antoine Miné(Sorbonne Université)
 - 问题：Python代码往往依赖native C代码。目前分析方法用stub来给C代码建模，但是要么耗时要么不准确。Python和C交互可能带来的问题：C没有异常处理；Python和C得数据表示不同，C存在溢出问题但Python对此无知。
 - 贡献：
   - 设计了Python/C的语义
-  - 在Mopsa下实现了对Python/C跨语言的流敏感、上下文敏感数据流分析。基于Mopsa现成的Python和C分析工具，检测C和Python的运行时错误
+  - 提出了Python/C跨语言的流敏感、上下文敏感数据流分析，Python和C共享地址和数值抽象。
+  - 基于Mopsa现成的Python和C分析工具，检测C和Python的运行时错误
+    - C：无效内存访问、整型溢出
+    - Python: AttributeError, TypeError, ValueError, SystemError
 - 本文不采用自底向上地构建summary的方法，声称：
   - 分析动态类型语言不用上下文敏感很难讲分析得精确。*（这和动态类型有关吗？）*
   - 上下文敏感分析很难自底向上地分析。*（为啥？）*
@@ -105,20 +118,24 @@ tag:
   - 返回null但是没有设置exception flag。
   - Python/C 数据类型转换错误（`PArg_ParseTuple`、`PyLong_FromLong`）
   - Python整型转换C整型导致溢出。
-  - 引用计数错误（不解决）
-- Python/C语义：![](./2023-05-08-211609.png)
+  - 引用计数错误（本文不解决）
+- Python/C具体语义：![](./2023-05-08-211609.png)
   - 假设：在C中，Python内建的对象只能通过API访问。C用API访问内建对象视作回调Python函数，也就是现在Python端读取，再使用某种Python $\rightarrow$ C转换语义。
-  - Python状态：一切皆对象；堆就是地址$\rightarrow$对象，环境就是变量$\rightarrow$地址。
+  - Python状态：
+    - 一切皆对象；
+    - 堆：地址$\rightarrow$对象
+    - 环境：变量$\rightarrow$地址。
+  - **地址Addr**和**数字Numeric**在Python和C之间**共享**。
   - C状态：
-    - 数据可以在堆中，也可以在栈中。表现为Cells，Base就是数据的基地址。
+    - 数据可以在堆中，也可以在栈中，用结构体表示。Cells是结构体成员，Base就是数据的基地址。
     - 指针不只是堆地址，还可以偏移。
-    - 环境是每一个成员$\rightarrow$值
-    - 堆用来标识内存有多大，数据是C内部（malloc）的还是Python（PyAlloc）的。C和Python共享Addr。
+    - 环境：每一个成员$\rightarrow$值
+    - 堆：标识申请内存有多大，数据是C内部（malloc）的还是Python（PyAlloc）的。C和Python共享Addr。
     - 对于Python对象，存在两个视角：Python视角下一个对象有基本类型（函数、类、实例、内建）以及它们的域；在C视角下，Python对象有成员。
   - boundary function：在Python对象的不同视角之间进行转换。Python对象同时在C和Python中被表示，如何把一边的表示翻译成另一边的表示。这种转换是抽象的，并不是具体的程序行为。
     - Python$\rightarrow$C：先翻译对象的类型（也是一个对象），然后在C堆中把Python对象（表示为一个地址）标记为`PyAlloc`大小为`PyObjectSize`。
-    - C$\rightarrow$Python：如实地返回地址即可。
-    - *在C中可以注册类的方法，也就是Python视角下对象的域，这怎么实现？*
+    - C$\rightarrow$Python：也是递归地翻译`ob_type`为Python对象，以这个对象为类型
+    - *在C中使用PyAlloc创建Python对象？函数对象怎么办，怎么对应到C函数？类对象怎么办，在C中给类注册方法怎么实现？*
   - Call：![](./2023-05-08-220724.png)
     - C$\rightarrow$Python：函数就是C形式。检查第一个参数是否匹配函数绑定的类型；打包参数、翻译参数Python$\rightarrow$C；检查返回值是不是NULL，翻译返回值。
     - Python$\rightarrow$C：函数是C中的Python对象。翻译函数，翻译参数，在Python语义中调用。等等。
@@ -128,7 +145,7 @@ tag:
     - Long Python$\rightarrow$C: `PyLong_AsLong`把C中Python int对象转换为C int。方法为先翻译C中Python对象为Python表示，检查类型，检查取值，直接获取取值。
     - Long C$\rightarrow$Python: `PyLong_FromLong`C int转换为C中的Python int对象。方式为在Python语义中调用`int(...)`，再翻译为C。
     - 转换都是在C的语义下完成的，因为binding code就是用C写的。这个转换有具体的转换行为（代码中调用一个Python转换API）,将C int转换为Python对象。
-  - 抽象语义：把上述的Number和Addr换成抽象表示。Number可以换成interval abstraction、octagon abstraction。Addr可以换成callsite、recency。
+- 抽象语义：把上述的Number和Addr换成抽象表示。Number可以换成interval abstraction、octagon abstraction。Addr可以换成callsite、recency。
 - 实验中，用“选择性”来展现他们工具的能力：工具计算的安全操作数/动态检查的数量。
 
 
@@ -138,14 +155,14 @@ tag:
 
 
 #### [Bilingual Problems: Studying the Security Risks Incurred by Native Extensions in Scripting Languages](https://www.semanticscholar.org/paper/Bilingual-Problems%3A-Studying-the-Security-Risks-by-Staicu-Rahaman/681c9dac27366e20aa84fdb4992177dcf2aba9a2)
-- 2021
-- 问题：Python、Javscript、Ruby都允许用其他语言来写extension，而写extension的人可能会犯错，引入一些漏洞。
-- 贡献：
+- arXiv 2021, USENIX Security 2023, Cristian-Alexandru Staicu, Ágnes Kiss, Michael Backes(CISPA), Sazzadur Rahaman(U~ of Arizona)
+- **问题**：Python、Javscript、Ruby都允许用其他语言来写extension，而写extension的人可能会犯错，引入一些漏洞。
+- **贡献**：
   1. 总结了一些misuse模式
   2. 设计一个工具检查这些misuse，用于Node.js和npm上的包
 - 几种错误：
   - 没有处理异常，导致crash
-  - 参数翻译，Node.js的参数检查交给开发者来做。相比之下，*Python要求开发者指定参数数量和类型*。假如参数类型不对，两种native addons的处理还不同：或返回error code，或直接忽略；`\0`表示字符串的终结？
+  - 参数翻译，假如参数类型不对，两种native api的处理还不同：或返回error code，或直接忽略；`\0`表示字符串的终结？
   - 缺少返回值，但是又尝试读取返回值会hard crash。
   - 调用C extension是同步的，可能会阻塞Node.js
   - 内存管理问题：缓冲区溢出，释放后使用、重复释放。
@@ -154,9 +171,14 @@ tag:
 2. Native Abstractions for Node.js（NAN），用宏封装了上述头文件。Nan可以用宏自动判断版本，自动展开成相应的接口，使得API独立于Node.js版本。虽然源代码相同，但依然需要针对不同版本的Node.js进行编译，因此所有的二进制代码很多。而且只能用于v8引擎。
 3. Node API（N-API）是Node.js基于C设计的API，用于摆脱对JS引擎的依赖。N-API包含了ABI（因为支持JIT，跨语言调用需要用ABI统一），ABI在大版本中保持稳定，不需要重新编译。node-addons-api在此之上提供C++封装。
 :::
-- 他们的方法是对JavaScript和C分别提取他们的过程内数据流。对于JavaScript，他们要找哪些函数用到了C API，并且根据下面的语法模式（各种脚本语言extension用来注册API的方法）来匹配C函数和API名字。然后，将JavaScript的函数和C的函数的数据流连接起来。对于他们要找的每个漏洞，指定一个sink节点，然后分析从JavaScript的entry node到sink node之间的路径有无sanitizer，有则安全，无则报警。
-![](./e55c9ad3edb329773d43524f2e8a34c9.png)
-- 他们也推广到过程间分析。他们利用现成的调用图，从上述的vulnerable function开始倒推，用后向数据分析来做def-use分析。
+- **方法**：
+  - 对JavaScript和C分别提取他们的过程内数据流。![](./2023-05-12-141125.png)
+  - 连接数据流：找到名字对，C函数名和在JavaScript中的名字。根据下面的语法模式（各种脚本语言extension用来注册API的方法）。![](./e55c9ad3edb329773d43524f2e8a34c9.png)
+  - 对于他们要找的每个漏洞，指定一个sink节点，然后分析从JavaScript的entry node到sink node之间的路径有无sanitizer，有则安全，无则报警。
+
+  - 他们也推广到过程间分析。他们利用现成的调用图，从上述的vulnerable function开始倒推，用后向数据分析来做def-use分析。
+- **实现**:
+  - 数据流图：Joern来分析C/C++、Google Closure Compiler来分析JavaScript。
 - 和[binding](#finding-and-preventing-bugs-in-javascript-bindings)类似，这篇论文偏安全方向，里面提到了很多跨语言交互的一些细节，但是他们是把它当作一个个可能存在的漏洞提出来的，而不是建立全面的semantic来描述这些行为。感觉有些琐碎了。
 
 #### [Finding and Preventing Bugs in JavaScript Bindings](https://ieeexplore.ieee.org/stampPDF/getPDF.jsp?tp=&arnumber=7958598&ref=&tag=1)
@@ -345,6 +367,7 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 
 ### [HaiPeng Cai]()
 
+### [Sukyoung Ryu(KAIST)]()
 
 ## 资源
 
