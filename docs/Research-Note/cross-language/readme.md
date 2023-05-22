@@ -11,7 +11,12 @@ tag:
    2. 定位：同样是静态分析，有些是面向开发者的（针对源码分析），有一些是第三方、软件平台（无法获取源代码、针对二进制分析）
 2. **假设**。看似结果很好，但是有很多前提条件。要发现文章隐含的假设就更难了。
 3. **贡献**。一两句话的概括。
-4. **方法/创新点**。有些文章形式化写得很牛逼，一实现就很简单。此时的贡献就是形式化本身，而不是方法了。
+4. **方法/创新点**：
+   1. 有些文章形式化写得很牛逼，一实现就很简单。此时的贡献就是形式化本身，而不是方法了。
+   2. 要专注idea如何体现在效果上（评估、指标、落地解决了什么问题）。有用的idea才是好idea。有些文章最后实现的成品和方法是脱节的，看不出方法有什么用。
+5. **实验**：无论方法如何炫酷，实验效果才是硬道理！复杂的方法未必能用，简单的方法反而能work。
+   1. RQ、实验方法、数据集、指标
+   2. 结果：一两句话描述。
 :::
 
 ## 名词定义：一些摘抄
@@ -51,6 +56,10 @@ tag:
 
 
 ## 论文
+:::warning TODO
+补全所有论文的评估部分，尽量揭示其方法和评估之间的关联。
+:::
+
 ### 静态
 #### [Broadening horizons of multilingual static analysis: semantic summary extraction from C code for JNI program analysis](https://doi.org/10.1145/3324884.3416558)
 :::warning TODO
@@ -355,12 +364,67 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 #### [Language-agnostic dynamic analysis of multilingual code: promises, pitfalls, and prospects](https://dl.acm.org/doi/10.1145/3540250.3560880)
 - FSE 22, Haoran Yang (Washington State U~)、Wen Li、Haipeng Cai
 - 本文是对ORBS的验证论文。ORBS是不分语言的动态分析，旨在在多种语言混合的场景下进行程序切片。
-- 本文的结论是做不分语言的动态分析并不实际也无必要：
-    1. 统一抽象语义并不可扩展
-    2. IR转换需要大量工程上的工作，并不实际。LLVM提供了统一的IR，但是很多语言的前端却缺少维护。
-    3. 用元模型来抽象不同语言的执行，和具体的动态执行本身是矛盾的。
+- **结论**：做不分语言的动态分析并不实际也无必要
+  1. 统一抽象语义并不可扩展
+  2. IR转换需要大量工程上的工作，并不实际。LLVM提供了统一的IR，但是很多语言的前端却缺少维护。
+  3. 用元模型来抽象不同语言的执行，和具体的动态执行本身是矛盾的。
 
 
+#### [PolyCruise: A Cross-Language Dynamic Information Flow Analysis](https://www.semanticscholar.org/paper/PolyCruise%3A-A-Cross-Language-Dynamic-Information-Li-Ming/4511acdf1e7cf798fad081b691b7c9b7b3bc4186)
+- USS 2022, Wen Li, Haipeng Cai(Washington State U~), Jiang Ming(U~ of Texas at Arlington), Xiapu Luo(The Hong Kong Polytechnic U~)
+- **问题**：多语言软件的漏洞可能跨语言或者在语言边界上。目前大部分跨语言的安全分析集中在JNI上。另外一些工具不够实用：语言扩展性不足、规模扩展性不足。
+- **挑战**：语义异构、效率
+- **贡献**：
+
+- **方法**：静态与动态分析相结合，动态分析弥补因语言的不同而导致静态没法分析的部分；静态分析指导动态分析插桩，以达到较好的延展性和效率。
+  - 特定语言分析：生成语言无关的符号表示（LISR）![](2023-05-21-22-34-20.png)
+    - 3种指令：赋值、调用、返回。**field-insensitive**
+    - 2种符号：全局和函数 
+  - 符号有关的分析（SDA）：计算与sources/sink有关的近似依赖
+    - 依赖：$S_i$、$S_j$都是指令，如果$S_j$使用了$S_i$定义的符号，则说$S_i$依赖$S_j$。可以看出这里的依赖是等价关系。
+    - 把依赖设计成对称的，是因为没有别名分析，会丢失一些真依赖（？）
+    - 输入sources，然后计算哪些语句是可达的。可达指的是def-use、跨过程、正向和反向。
+    
+  - 插桩：
+    - 静态插桩： 只对编译后的代码根据SDA中sources可达的语句插桩。
+    - 动态插桩：针对动态类型语言，同样只对sources可达的指令。 
+    - 运行时事件：![](2023-05-22-14-21-29.png) 。和LISR一样记录三种指令。但是表达式不再是符号，而是数据类型、地址。
+  - 动态分析：以运行时事件为节点构建动态信息流图，分为不同线程。
+    - 线程间控制流：跨线程的call事件。
+    - 线程内控制流：有时序的两个事件。
+    - 线程间数据流：跨线程，有def-use关系且满足时序，而且涉及的是共享或全局变量。
+    - 线程内数据流：类似 
+  - 漏洞分析
+  - - **完全没有涉及跨语言**，其中最重要的是没有说如何处理语言边界，SDA的时候也没有说如何将两种语言的数据流对齐。只能猜测在生成LISR时透过了语言边界用统一的符号来表示。
+- **实现**：面向Python-C
+  - 输入：程序、配置（sources/sinks、安全分析）、程序执行输入。
+  - C：静态分析、静态插桩用LLVM，
+  - Python：静态分析用PyPredictor； 动态插桩用`sys.settrace`；监视实现为C库，然后从Python链接。
+  - 7种漏洞分析插件：sensitive data leak, control flow integrity, partial comparison, buffer overflow, integer overflow, and divide  by zero
+- **评估**：
+  -  手工数据集PyCBench：人工制作46 benchmarks，每个一个输入。
+  -  real-world软件： 12个，3k-6m代码 
+  - 效果（precision/recall）：
+    - positive是指有vulnerable，也就是source/sink连通
+    - 人工审查。对于real world projects，选取**5个最不复杂** *（？）*的project来分析，对给定的sources/sinks运行完整的动态分析的traces作为groundtruth，选取其中**15条**traces人工审查。
+    - PyCBench只有在field-senstive/object-sensitive中出现1-2 FP；real world projects中recall**全部100%**，precision几乎全部100%，平均88.2% ；若把exploitable视作TP，平均58.8%。  
+  - 效率（代价）：
+    - SDA：对<=200k代码，2s/100M；对Pytorch，175s/7GB。
+    - 动态slowdown、内存峰值。 
+  - 能否找漏洞
+  - 工具比较。
+
+:::info Python/C的两种FFI
+- `ctypes`允许Python载入C的动态链接库。整个库会包装成`CDLL`对象，导出的C函数是这个对象的属性。调用C函数可以用built-in对象来作为参数。
+- Python/C API：C开发者使用API把C包装成Python的模块。与上面不同，此时C代码对Python是已知的，而且要遵守Python/C的规范来编写代码。
+:::
+
+:::info Field-X Analysis
+![](2023-05-22-15-53-35.png)
+- field-insensitive: 属性直接抹掉，变成base之间的赋值。
+- field-based：不同实例的同一属性被统一起来。
+- field-sensitive：不同实例的属性分开对待。
+:::
 ## 研究组
 
 ### [Gang Tan]()
@@ -379,4 +443,4 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 
 ----
 ### 记录
-继续搜索：JNI, FFI, foregin function, nodejs addons, cgo, android hybrid app, language boundary
+继续搜索：JNI, FFI, foreig n function, nodejs addons, cgo, android hybrid app, language boundary
