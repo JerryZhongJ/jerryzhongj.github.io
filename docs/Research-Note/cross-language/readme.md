@@ -359,15 +359,7 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 ####  [Automatic Modeling of Opaque Codefor JavaScript Static Analysis](https://dl.acm.org/doi/10.1145/2025113.2025125)
 - FASE 19, Joonyoung Park（Oracle\KAIST）、Sukyoung Ryu（KAIST）
 - 动态分析C函数。通过组合测试的方法。对于js端的数据流分析，对于调用C端函数的程序点，对参数的抽象值采样具体取值。然后调用C端函数跑一遍，对返回值再抽象回去。
-- 不保证soundness；基本类型采样可理解，怎么对对象采样没搞懂；采样没有什么高明的方法，依靠启发式。
-    
-#### [Language-agnostic dynamic analysis of multilingual code: promises, pitfalls, and prospects](https://dl.acm.org/doi/10.1145/3540250.3560880)
-- FSE 22, Haoran Yang (Washington State U~)、Wen Li、Haipeng Cai
-- 本文是对ORBS的验证论文。ORBS是不分语言的动态分析，旨在在多种语言混合的场景下进行程序切片。
-- **结论**：做不分语言的动态分析并不实际也无必要
-  1. 统一抽象语义并不可扩展
-  2. IR转换需要大量工程上的工作，并不实际。LLVM提供了统一的IR，但是很多语言的前端却缺少维护。
-  3. 用元模型来抽象不同语言的执行，和具体的动态执行本身是矛盾的。
+- 不保证soundness；基本类型采样可理解，怎么对对象采样没搞懂；采样没有什么高明的方法，依靠启发式。 
 
 
 #### [PolyCruise: A Cross-Language Dynamic Information Flow Analysis](https://www.semanticscholar.org/paper/PolyCruise%3A-A-Cross-Language-Dynamic-Information-Li-Ming/4511acdf1e7cf798fad081b691b7c9b7b3bc4186)
@@ -425,6 +417,7 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - field-based：不同实例的同一属性被统一起来。
 - field-sensitive：不同实例的属性分开对待。
 :::
+
 ## 研究组
 
 ### [Gang Tan]()
