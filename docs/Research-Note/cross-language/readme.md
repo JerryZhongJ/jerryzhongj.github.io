@@ -357,11 +357,36 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
     - 隐式抛出？
     - 回调Java方法，该方法抛出异常，该异常在native侧是“待发”的。
   - 当native代码抛出异常，要等到native代码结束才会打断执行流。
-- 可能的bug：
+  - native代码可以用`ExceptionClear`处理异常。
+- 两种bug：
   - native代码声明的异常和实际抛出的异常不一致。
-  - native代码手动处理异常
+  - native代码错误处理异常：当JNI异常是待发的，但是接下来的操作是不安全的。
+    - ![](./2023-06-29-11-19-12.png)
+    - （a）`GetIntArrayElements`抛出异常返回空指针，后续解引用异常
+    - （b）在抛出异常后调用其他JNI函数
 - **贡献**：
   - TurboJet，静态分析JNI程序，查找异常声明和实现的不一致
+- **方法**：
+  - 输入：Java class + native code；输出：警报。
+  - 删除无关代码：与JNI无关的库代码
+  - 细粒度分析：上下文敏感、路径敏感
+    - 有限状态机（FSM）：无待发异常、checked异常待发、unchecked异常待发
+    - 路径敏感：JNI程序抛出异常时，也会返回不正常的返回值。程序可以通过返回值判断异常状态，马上退出。分析应该要捕捉这两个关联。
+      - ESP
+      - 每个控制流边有n个状态，每个包含FSM状态 + 基本数据类型的常量值 + Java对象的类
+    - 上下文敏感：是为了应对开发者用抛出异常的API实现多次封装，导致不同类型的异常被混在一起。
+      - 上下文：caller + FSM状态
+    
+      
+    
+- 不安全操作：
+  - 白名单：清理资源（？）、立即返回或清除异常是安全行为
+  - 污点分析的源：都是指针
+    - 可能失败的JNI函数
+    - 返回数组或字符串指针的JNI函数
+    - 可能失败的库函数
+  - 污点分析的汇：指针解引用
+  - 不安全操作：不在白名单上、污点指针解引用
 
 #### [Collecting Cyclic Garbage across Foreign Function Interfaces: Who Takes the Last Piece of Cake?](https://dl.acm.org/doi/10.1145/3591244)
 - PLDI 23
@@ -395,8 +420,8 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
     - 主语言导出表的对象 - 外部语言中的代理对象
     - 对于根集不可达的代理对象，其原对象会在外部语言的导出表中被移除。与原来的区别在于，现在只看根集就移除。
     - 对于主语言中导出表对象$\rightarrow$代理对象的边，在外部语言中建立代理对象$\rightarrow$导出对象的边。这叫做镜像引用。
-  3. 让外部语言回收循环垃圾
-  4. 让主语言回收
+  3. 让垃圾回收器回收循环垃圾
+  
 
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
@@ -419,7 +444,7 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - **贡献**：
 
 - **方法**：静态与动态分析相结合，动态分析弥补因语言的不同而导致静态没法分析的部分；静态分析指导动态分析插桩，以达到较好的延展性和效率。
-  - 特定语言分析：生成语言无关的符号表示（LISR）![](2023-05-21-22-34-20.png)
+  - 特定语言分析：生成语言无关的符号表示（LISR）![](./2023-05-21-22-34-20.png)
     - 3种指令：赋值、调用、返回。**field-insensitive**
     - 2种符号：全局和函数 
   - 符号有关的分析（SDA）：计算与sources/sink有关的近似依赖
@@ -430,7 +455,7 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
   - 插桩：
     - 静态插桩： 只对编译后的代码根据SDA中sources可达的语句插桩。
     - 动态插桩：针对动态类型语言，同样只对sources可达的指令。 
-    - 运行时事件：![](2023-05-22-14-21-29.png) 。和LISR一样记录三种指令。但是表达式不再是符号，而是数据类型、地址。
+    - 运行时事件：![](./2023-05-22-14-21-29.png) 。和LISR一样记录三种指令。但是表达式不再是符号，而是数据类型、地址。
   - 动态分析：以运行时事件为节点构建动态信息流图，分为不同线程。
     - 线程间控制流：跨线程的call事件。
     - 线程内控制流：有时序的两个事件。
@@ -462,7 +487,7 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 :::
 
 :::info Field-X Analysis
-![](2023-05-22-15-53-35.png)
+![](./2023-05-22-15-53-35.png)
 - field-insensitive: 属性直接抹掉，变成base之间的赋值。
 - field-based：不同实例的同一属性被统一起来。
 - field-sensitive：不同实例的属性分开对待。
