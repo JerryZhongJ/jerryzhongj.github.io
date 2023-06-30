@@ -324,21 +324,28 @@ tag:
 - **概述**：本文是对多语言项目的实证研究，旨在发现多语言的脆弱（proneness to vulnerability）和语言选择的关系。他们发现和语言边界的接口有很大关系。
 
 #### [Cross-language Android permission specification](https://dl.acm.org/doi/10.1145/3540250.3549142)
-:::warning TODO
-补全方法
-:::
+
 - ESEC/FSE 22, Chaoran Li, Sheng Wen, 
 Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ of Adelaide), Minhui Xue, Muhammad Ejaz Ahmed, Seyit Camtepe(CSIRO’s Data61)
-- **问题**：Android一些敏感API会要求权限，但是官方没有给出这样的清单说什么API会请求什么权限。已经有研究者扫描呢API框架给出这样的映射，但是对native library（C/C++）却没有。
+- **问题**：Android一些敏感API会要求权限，但是官方没有给出这样的清单说什么API会请求什么权限。已经有研究者扫描API框架给出这样的映射，但是对native library（C/C++）却没有。![](./2023-06-30-15-35-08.png)
 - **贡献**：
   - NatiDroid：跨语言**控制流**分析
   - 提取API-permissinos映射，分析“过度提权”漏洞。
+- **背景**：
+  - Android的java/C++交互模型
+    - AIDL：IPC，c/s
+    - JNI
 - **方法**：
-  - 生成中间代码（.jar/Clang Complie commands）
-  - 结合跨语言API，识别入口
-  - 构建跨语言控制流图，提取映射
+  - 生成中间代码（.jar、Clang Complie commands）
+  - 结合跨语言API，识别入口对：语法分析
+  - 构建跨语言控制流图
+    - C：前向分析，只保留安全检查的图（权限检查、uid/pid检查）
+    - Java：从语言边界反向到最外层API（API可能调用API）
+  - 提取映射
 - 实现
   - 基于SOOT和CLANG分析框架
+- **评估**：
+  - 
 
 #### [Finding Reference-Counting Errors in Python/C Programs with Affine Analysis](http://link.springer.com/10.1007/978-3-662-44202-9_4)
 - ECOOP 2014, Siliang Li, Gang Tan(Lehigh U~)
@@ -422,6 +429,7 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
     - 对于主语言中导出表对象$\rightarrow$代理对象的边，在外部语言中建立代理对象$\rightarrow$导出对象的边。这叫做镜像引用。
   3. 让垃圾回收器回收循环垃圾
   
+
 
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
