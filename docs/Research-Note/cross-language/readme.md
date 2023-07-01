@@ -14,6 +14,7 @@ tag:
 4. **方法/创新点**：
    1. 有些文章形式化写得很牛逼，一实现就很简单。此时的贡献就是形式化本身，而不是方法了。
    2. 要专注idea如何体现在效果上（评估、指标、落地解决了什么问题）。有用的idea才是好idea。有些文章最后实现的成品和方法是脱节的，看不出方法有什么用。
+   3. motivation examples要仔细看。针对具体场景的方法都不是系统的，而是面向case的。看了case才知道为什么这么设计方法。
 5. **实验**：无论方法如何炫酷，实验效果才是硬道理！复杂的方法未必能用，简单的方法反而能work。
    1. RQ、实验方法、数据集、指标
    2. 结果：一两句话描述。
@@ -314,6 +315,40 @@ tag:
   - 给Native Develpment Kit（NDK）、JNI建模，让二进制分析工具能够分析native code。
   - 这里的native code是**二进制层面**的。
   - JN-SAF：跨语言数据流跟踪，能够找到跨语言安全问题。
+- **背景**：
+  - Native Development Kit（NDK）：android允许开发者使用NDK用C/C++编写组件，运行时直接调用native代码中的生命周期方法。基于JNI。
+  - 两种native Activity：
+- **Motivation Examples**
+  - ![](./2023-07-01-16-04-40.png)
+  - native code可能回调java方法
+- **方法**
+  - 基于摘要自底向上分析![](./2023-07-01-19-08-54.png)
+    - 摘要：![](./2023-07-01-16-27-50.png)
+    - 摘要描述的是**Java对象**
+    - LOC：代码位置
+    - HeapLoc：参数、返回、变量的成员（下标）
+    - assign：对HeapLoc强更新、弱更新、删除
+    - action：在某个代码点对某个HeapLoc、Instance删除堆、标记为source/sink
+  - 解析动态注册（在二进制中）：
+    - ![](./2023-07-01-16-47-49.png)
+    - 从`JNI_OnLoad`开始符号执行
+    - 对`vm`、`GetEnv`、`RegisterNatives`建模，并且在`RegisterNatives`中获取`gMethods`数组的地址
+  1. 反编译：把bytecode反编译成Pilar，用angr反编译二进制成VEX
+  2. 用Amandroid构建环境模型。Android是基于事件的系统，没有入口。
+  3. 基于摘要的数据流分析
+     1. 构建调用图。调用图是双向的。
+     2. 自底向上摘要传播
+     3. 用Amandroid做Java数据流分析
+     4. 用angr的符号分析的标注功能做C数据流分析
+      - 对JNI函数建模，在创建/操作Java对象时修改summary标注
+      - 把所有的Linux系统调用、JNI回调API标注为污点源、汇（哪些是源？）
+- **评估**
+  - 数据：
+    - NativeFlowBench：22个benchmark
+    - AndroZoo中100000个app
+    - AMD数据集中24553恶意app
+  - 与baseline在NativeFlowBench比较，看能够报告数据泄漏路径
+  - 在real world projects讨论了4个case
        
 #### [On the Vulnerability Proneness of Multilingual Code](https://doi.org/10.1145/3540250.3549173)
 :::warning TODO
