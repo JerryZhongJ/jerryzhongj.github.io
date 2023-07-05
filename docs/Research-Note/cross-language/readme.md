@@ -287,7 +287,7 @@ tag:
 :::
 
 - ICSE 2022
-- **问题**：恶意软件可能在Android的native code里面。当前分析native code的方法是临时的，对bytecode和native code的分开分析，然后再把结果统合在一起 *（JN-SANF？DroidNative？NativeGuard？TaintArt？）*，缺少统一模型。
+- **问题**：恶意软件可能在Android的native code里面。当前分析native code的方法是临时的，对bytecode和native code的分开分析，然后再把结果统合在一起 *（JN-SAF？DroidNative？NativeGuard？TaintArt？）*，缺少统一模型。
 - **贡献**：
   - Jucify：生成包含native代码的统一Jimple表示。
   - Jucify直接在**二进制层面**进行分析：bytecode和native binaries。
@@ -387,8 +387,42 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - **问题**：Python运行时无法管理native模块对Python对象的引用，native模块需要手动修改引用计数。
 - **贡献**：
   - Pungi：用静态分析来识别Python native C模块中的引用计数错误。
-  - 对native模块仿射抽象（affine abstraction）得到仿射程序：放射程序中的赋值右手边只能是仿射表达式（$a_0+\sum_{i=1}^na_ix_i$）。
+    - 只分析C代码
+  - 对native模块仿射抽象（affine abstraction）得到仿射程序：赋值右手边只能是仿射表达式（$a_0+\sum_{i=1}^na_ix_i$）。
 - 本文不算做跨语言分析，因为它没有处理语言边界问题，但是这是一个在跨语言场景下的程序分析问题。
+- **背景**：
+  - ![](./2023-07-05-14-52-08.png)
+  - 借引用：
+    - 获得一个对象的引用但是不增加引用计数。
+    - 根据Python/C manual，当你知道其他其他引用活得比这个变量久，那就别增加计数。
+    - 从caller的参数借：caller的生命周期肯定比callee长
+    - 从特定API的返回值借：特定API的行为如此，如`PyList_GetItem`。在借这种引用，需要保证你活得比别人短。*假如API加了一层封装，它的返回值？*
+  - 偷引用：指API的行为，API的借叫做偷，如`PyList_SetItem`
+    - API从caller获得一个对象的引用，但是不增加引用计数；获取失败反而会减少引用计数。
+    - 表现为从caller的变量偷走引用，该变量的引用视为无效。
+  - 成功创建对象时，引用计数为1。
+- **方法**：
+  - 对象的引用逃逸出作用域：被返回、传递给全局变量、传递给堆、被偷走
+  - 以object scope为单位分析，而不是所有程序点。
+    - 因为借/偷，不是所有引用都会被计数。粗粒度有利于减少FP。
+    - 对象分为natively创建的和Python创建的
+      - natively创建的对象的scope是创建点所在函数
+      - Python创建的对象的scope是入口函数
+    - 一个object在其scope内的引用计数变化等于逃逸数。
+    - *看起来object scope提出的意义就在于区分entry function和创建对象的函数。*
+  1. 分离接口和库
+  2. 翻译成SSA
+  3. 仿射翻译
+    - ![](./2023-07-05-14-50-22.png)
+    - 先假设每个参数分别指向不同对象
+    - 维护变量-对象映射 
+    - 变量都是$rc_i, on_i$，$on_i$指示成功创建对象。这是关于reference counter的程序，所以才是仿射的
+- **实现**
+  - OCaml
+- **评估**  
+  - 13个real world项目
+  - ![](./2023-07-05-16-33-37.png)
+  - 人工审查所有errors
 
 #### [Exception analysis in the Java Native Interface](https://www.sciencedirect.com/science/article/pii/S0167642314000446)
 - SCP 2014, SiliangLi, GangTan
