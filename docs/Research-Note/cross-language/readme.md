@@ -70,7 +70,7 @@ tag:
 - ASE 20, Sungho Lee(Chungnam National University), Hyogun Lee(KAIST), Sukyoung Ryu(KAIST)
 - **问题**：针对跨语言的静态分析仍然不足。一些静态分析工具直接忽略外部函数调用，一些工具能分析多种语言但不能同时分析，一些工具能够分析Android hybrid app但仅限于这种情况，不具备可扩展性。
 - **贡献**：
-  - 尝试提出通用的多语言分析方法（如题目所说）：对客语言进行模块化分析提取摘要，只保留互操作有关的信息；对主语言（提供FFI的一方，Java）采用全程序分析。主语言分析对客语言的语义无知，只知道FFI语义和客语言的摘要。
+  - 提出通用的多语言分析方法：对客语言进行模块化分析提取摘要，只保留互操作有关的信息；对主语言（提供FFI的一方，Java）采用全程序分析。主语言分析对客语言的语义无知，只知道FFI语义和客语言的摘要。
   - 对类C语言的语义摘要提出形式化抽象语义
   - 实现了JNI分析器
 - **方法**：
@@ -380,7 +380,6 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - 实现
   - 基于SOOT和CLANG分析框架
 - **评估**：
-  - 
 
 #### [Finding Reference-Counting Errors in Python/C Programs with Affine Analysis](http://link.springer.com/10.1007/978-3-662-44202-9_4)
 - ECOOP 2014, Siliang Li, Gang Tan(Lehigh U~)
@@ -499,7 +498,78 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
   3. 让垃圾回收器回收循环垃圾
   
 
+#### [HybriDroid: Static Analysis Framework for Android Hybrid Applications](http://dx.doi.org/10.1145/2970276.2970368)
+- ASE 16, Sungho Lee, Sukyoung Ryu (KAIST), Julian Dolby (IBM Research)
+- **问题**：安卓混合app是javascript和java相结合 
+- **贡献**：
+  - HybridDroid：指针分析，构建调用图
+  - 总结了混合app的互操作语义
+  - 客户端：bug检测、污点分析 
+- 互操作：
+  - 安卓用`WebView`组件来加载网页，并且异步运行其中的JavaScript代码。`WebView`可以设置client，其中包含callback，在JavaScript触发某些事件时被调用。
+  - `WebView`执行JavaScript：`loadUrl`、`evaluateJavascript`
+  - 交流方式：
+    - 回调（上述）
+    - **桥**：
+      - 在JavaScript环境中注入Java对象（称为`桥对象`），JavaScript可以直接调用其方法，但是不能访问域。
+      - JavaScript中的桥对象不允许删除或修改方法。
+      - 基于Java反射机制实现
+      - 类型转换：![](./2023-08-02-09-34-23.png)；对于对象，只允许传递类型兼容的桥对象或数组。
+     
+      - 使得JavaScript可以改变Java环境，存在安全隐患
+- **挑战**
+  - 多JavaScript环境：WebView可能分开加载多个独立的JavaScript代码
+  - 动态载入代码
+  - 分析敏感度
+  - 不同安卓版本：安卓17之后需要加上`JavascriptInterface`标注才能被调用。
+- **方法**：
+  - 提取`loadUrl`方法的字符串参数
+  - 提取元信息
+  - 处理桥交流，构建调用图
+- 检测bug：
+  - 找不到Java方法
+  - Java方法未调用
+  - 方法类型重载：不允许以参数类型重载方法
+  - 不兼容类型
+- **实现**
+  - WALA
+- **实验**：
+  - bug检测：88 混合app。其中14个app有31 bugs，其中24 TP，TP全都是“未找到方法”。其中20个由于缺少标注，1个未定义，3个由于代码混淆。
+  - 隐私泄露：上述48 app，发现19个广告平台。展示了1个case。
+- **点评**：看来缺少标注是这篇文章的motivation了。
 
+#### [Static Analysis of JNI Programs via Binary Decompilation]()
+- TSE 23, Jihee Park, Sungho Lee, Jaemin Hong, Sukyoung Ryu
+- **问题**：
+  - 现有方法不适用于编译后的JNI程序，或者第三方库只有二进制。
+  - 之前的二进制分析方法只停留在语法层面，因此调用图和数据流不精确，无法发现一些类型的安全漏洞。
+  - [JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)：无法处理多执行路径（？）、全局变量、动态dispatch
+- **挑战**：
+  - 反编译产生的C代码不可编译，类型不精确。
+  - **解决方法**：启发式生成可编译C代码，提供准确类型信息
+- **方法**：
+  1. 提取签名：输入Java字节码，提取native meethod的签名
+  2. 交互式反编译：根据方法签名和库，生成C代码
+     1. 反汇编：利用Java端的native方法签名，启发式获得函数签名和数据类型
+     2. 生成IR（类C）
+        - 传播`JNIEnv*`类型：即便提供了`JNIEnv*`，反编译器并不会把类型传播下去。比如传递给参数为`int`的函数，反编译器会添加类型转换，而不是改变参数的类型为`JNIEnv*`。因此跟踪`JNIEnv*`的传播，修改类型。
+        - 修改JNI接口调用参数（定长）：反编译器错误推测JNI接口函数的参数数量。通过跟踪`JNIEnv*`识别调用。
+        - 修改JNI接口调用参数（变长：这类接口都是用来调用Java方法的。根据指定目标方法的参数，反向追踪其创建点，可以获得目标方法的签名。
+        - 利用额外类型信息辅助反编译，再把额外类型删掉（换成`void*`）：添加类型如`AndroidBitmapInfo`，但是这些类型并不在源文件中定义
+     3. 生成伪代码
+  3. 生成C代码
+  4. 分析源码
+- **实现**：
+  - 提取签名：FlowDroid
+  - 反编译：IDA、Ghidra with HEx-Rays反编译器
+  - 源码分析：[$JSA_{SC}$](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)
+- **实验**：
+  - **数据集**：NativeFlowBench（23个app），只能处理16个
+  - **指标**：
+    - 提取互操作？：跨语言调用数量 
+    - 启发式的作用？：开关每一个变换新增的$C \rightarrow J$调用
+    - 数据泄露检测?：以JN-SAF为baseline，指定source (`TelephonyManager.getDeviceId()`)、 sink
+    （`android_log_print`）
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
