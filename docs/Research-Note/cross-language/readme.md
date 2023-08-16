@@ -582,6 +582,27 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
     - 启发式的作用？：开关每一个变换新增的$C \rightarrow J$调用
     - 数据泄露检测?：以JN-SAF为baseline，指定source (`TelephonyManager.getDeviceId()`)、 sink
     （`android_log_print`）
+
+#### [Identifying Java calls in native code via binary scanning](https://dl.acm.org/doi/10.1145/3395363.3397368)
+- ISSTA 2020, George Fourtounis, Leonidas Triantafyllou, Yannis Smaragdakis (U~ of Athens)
+- **问题**：
+  - 缺少native code到java的调用将严重影响静态分析可靠性，主要体现在**入口点**少了
+  - [lee](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)的方法太过笨重，而且针对源码。
+- **方法**：
+  - 从Java代码中提取方法签名
+  - 查找native code，搜索方法签名的字符串
+  - 定位字符串的使用位置
+    - string x-refs：字符串引用并不一定是常数，可能是运行时确定的（位置无关代码）
+    - 这个分析最终是用来辅助DataLog指针分析的，因此还要模拟回调的实参。
+    - *本文的写法是分析可以增加Java端的入口点，因此回调参数不精确。*
+- **实现**：  
+  - Doop：基于DataLog，Java字节码指针分析
+  - Radare2：分析二进制，生成IR，定位字符串
+- **实验**：
+  - 数据集：XCorpus中有native代码的（4）、HeapDL的benchmark中表现出native代码回调的安卓app（2）
+  - 指标：
+    - XCorpus：回调函数数量（增加的入口点）、增加的可达方法、总数量。人工审查回调目标。
+    - 安卓app：以动态分析为ground truth，recall 100%。同上。
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
