@@ -216,14 +216,27 @@ tag:
 - 这篇论文只面向binding code进行分析，我觉得并没有“跨语言”，本质上仍是C++程序分析。但本文确实有关跨语言，那3种bugs就是跨语言场景下才存在的bug，所以这是在跨语言场景下对C++进行分析。而且这里的bug并不是指运行时出错，而是我可以手动创造条件（自己编写javascript代码）来触发，所以分析得更加保守。我觉得这篇论文一般。
 
 #### [Ilea: inter-language analysis across java and c](https://dl.acm.org/doi/10.1145/1297105.1297031)
-::: warning TODO
-补充翻译的细节，与[semantic summary extraction](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)对照
-:::
 
 - OOPSLA 07, Gang Tan (Boston College), Greg Morrisett (Harvard U~)
 - **问题**：之前的静态程序分析限定在一个语言中，但是Java中JNI的使用还是很多的。
-- 论文首先讨论了如何给C做规约的问题（如何描述C代码的行为）。其中一种方法是用标记，标记有无副作用、nullable甚至数据流值，但是这种方法过于ad-hoc，不具备可扩展性。他们决定用霍尔逻辑去描述C代码，捕捉运行前-运行后的关系：返回值与参数、运行前的Java堆-运行后的Java堆，抛弃C的执行步骤和C的堆。
-- **方法**：为了同时分析Java和C，他们选择把C代码翻译成Java虚拟机语言（JVML），具体来是扩展的JVML。
+- 如何给C做规约（如何描述C代码的行为）
+  - 做标记：不合适
+    - 标记有无副作用、nullable甚至数据流值
+    - 过于ad-hoc，不具备可扩展性。
+  - 本文用霍尔逻辑：描述C代码，捕捉运行前-运行后的关系：返回值与参数、运行前的Java堆-运行后的Java堆，抛弃C的执行步骤和C的堆。
+- Extended JVML：模拟C对Java堆的影响，引入不确定性
+  - choose $\tau$：返回$\tau$类型的随机值。当$\tau$是类，表示随机一个现有的对象。可用来模拟系统调用结果，和over-approximate。
+  - mutate x：修改一个对象为随机的值
+  - top：或修改或分配Java堆 
+- **方法**：为了同时分析Java和C，他们选择把C代码翻译成Java虚拟机语言（Extended JVML）。
+  - 类型映射：
+    - ![](./2023-07-06-15-06-35.png)
+    - 指针映射成void；指针类型变量直接丢弃。
+  - ![](./2023-07-06-14-43-54.png)
+    - ‘?’翻译成choose
+  - JNI API翻译：![](./2023-07-06-15-13-14.png)
+- **实现**：
+  - CIL 
 
 #### [Operational Semantics for Multi-Language Programs](https://dl.acm.org/doi/10.1145/1190216.1190220)
 - POPL 07, Jacob Matthews (U~ of Chicago), Robert Bruce Findler
@@ -359,7 +372,6 @@ tag:
 - **概述**：本文是对多语言项目的实证研究，旨在发现多语言的脆弱（proneness to vulnerability）和语言选择的关系。他们发现和语言边界的接口有很大关系。
 
 #### [Cross-language Android permission specification](https://dl.acm.org/doi/10.1145/3540250.3549142)
-
 - ESEC/FSE 22, Chaoran Li, Sheng Wen, 
 Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ of Adelaide), Minhui Xue, Muhammad Ejaz Ahmed, Seyit Camtepe(CSIRO’s Data61)
 - **问题**：Android一些敏感API会要求权限，但是官方没有给出这样的清单说什么API会请求什么权限。已经有研究者扫描API框架给出这样的映射，但是对native library（C/C++）却没有。![](./2023-06-30-15-35-08.png)
@@ -380,7 +392,6 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - 实现
   - 基于SOOT和CLANG分析框架
 - **评估**：
-  - 
 
 #### [Finding Reference-Counting Errors in Python/C Programs with Affine Analysis](http://link.springer.com/10.1007/978-3-662-44202-9_4)
 - ECOOP 2014, Siliang Li, Gang Tan(Lehigh U~)
