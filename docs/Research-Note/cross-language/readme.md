@@ -600,6 +600,67 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
   - 指标：
     - XCorpus：回调函数数量（增加的入口点）、增加的可达方法、总数量。人工审查回调目标。
     - 安卓app：以动态分析为ground truth，recall 100%。同上。
+
+
+#### [Combinations of Reusable Abstract Domains for a Multilingual Static Analyzer?]()
+:::warning
+补全 
+:::
+- Matthieu Journault, Antoine Mine, Raphael Monat, and Abdelraouf Ouadjaout (Sorbonne U~)
+- **背景**：
+  - 抽象解释：程序语义的近似，可以理解为解释器，但是这种解释器运行在所有的输入和路径，并且忽略语义细节。
+- **贡献**：
+  - MOPSA：模块化静态分析框架，可以结合、自定义多种抽象域
+  - 基于统一可扩展语言：AST。
+    - 语法可扩展：语法用OCaml定义
+
+#### [JET: Exception Checking in the Java Native Interface](https://dl.acm.org/doi/10.1145/2048066.2048095)
+- OOPSLA 11, Siliang Li, Gang Tan (Lehigh U~)
+- **问题**：native方法关于异常的声明与实现之间的不一致，Java端native方法的抛出异常声明不符合native代码。
+- **方法**：
+  - 库代码与接口代码分离
+  - 查找异常：
+    - 路径敏感： 
+    - 上下文敏感
+- **评价**：[这篇论文](#exception-analysis-in-the-java-native-interface)的前置工作。
+
+#### [μDep: Mutation-Based Dependency Generation for Precise Taint Analysis on Android Native Code]()
+:::warning
+补全实验 
+:::
+- TDSC 22, Cong Sun, Yuwan Ma, Dongrui Zeng, Gang Tan, Siqi Ma, and Yafei Wu
+- **问题**：
+  - 安卓app中的native code是不安全的，因为它对传统静态分析而言是一个黑盒。现存静态信息流分析只能分析bytecode层面，不能分析native code。
+  - 两种缺陷：native和bytecode互为source、sink，相互调用；source、sink都在bytecode，经由native code传播（bytecode调用native，并且native调用bytecode）。
+  - [JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)不够精确
+- **贡献**：
+  - uDep：结合DroidSafe，识别敏感信息流。动静态结合的方法，静态的二进制控制流分析+基于变异识别native code的污染效果
+  - 给native code建模方法：基于变异测试得到的输入返回关系；
+- **方法**：
+  1. 用IDA做二进制静态分析
+    - 查找对Java方法的调用，是否是source/sink，鉴定为type 1缺陷。
+    1. 从二进制中提取代码，发现JNI函数的调用`CallXXXMethod`，判断是否是source/sink
+    2. 反向查找使用这些source/sink的native函数
+    3. 判断这些native函数是否在Java端声明，加入到DroidSafe的source/sink列表
+    4. 对于添加进source列表代理方法，假如其native函数返回类型`T`，则污染代理方法的返回值或输出参数为兼容类型`T'`
+  2. 基于变异算法分析native方法的输入输出依赖
+     - 视native代码为黑盒，输入是参数，输出是返回值和对象类型参数
+     - 改变输入，观察输出是否变化。使路径尽量覆盖。
+  3. 利用语义和输入输出依赖，生成stub： 
+     - 基本 -> 基本：直接把输入类型转换成输出（描述两者的污染传播关系） 
+     - 基本 -> 非基本：用`addTaint`把输入添加到输出的域`taint`（*详情要看DroidSafe*）
+     - 非基本 -> 基本：把`getTaint(<input>)`赋值给输出。
+     - 非基本 -> 非基本：若类型兼容，直接赋值；否则使用`getTaint`、`addTaint`。
+- **实验**：
+  - 数据集：
+    - S1（143）：NativeFlowBench、DroidBench
+    - S2（5096）：AndroZoo
+    - S3（2052）：Drebin、DroidAnalytics、CIINvesAndMal1029中的恶意软件
+  - baseline：DroidSafe、JN-SAF
+  - 指标：
+    - 准确率：S1
+
+
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
@@ -669,63 +730,60 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - field-sensitive：不同实例的属性分开对待。
 :::
 
-#### [Combinations of Reusable Abstract Domains for a Multilingual Static Analyzer?]()
-:::warning
-补全 
-:::
-- Matthieu Journault, Antoine Mine, Raphael Monat, and Abdelraouf Ouadjaout (Sorbonne U~)
-- **背景**：
-  - 抽象解释：程序语义的近似，可以理解为解释器，但是这种解释器运行在所有的输入和路径，并且忽略语义细节。
-- **贡献**：
-  - MOPSA：模块化静态分析框架，可以结合、自定义多种抽象域
-  - 基于统一可扩展语言：AST。
-    - 语法可扩展：语法用OCaml定义
-
-#### [JET: Exception Checking in the Java Native Interface](https://dl.acm.org/doi/10.1145/2048066.2048095)
-- OOPSLA 11, Siliang Li, Gang Tan (Lehigh U~)
-- **问题**：native方法关于异常的声明与实现之间的不一致，Java端native方法的抛出异常声明不符合native代码。
-- **方法**：
-  - 库代码与接口代码分离
-  - 查找异常：
-    - 路径敏感： 
-    - 上下文敏感
-- **评价**：[这篇论文](#exception-analysis-in-the-java-native-interface)的前置工作。
-
-#### [μDep: Mutation-Based Dependency Generation for Precise Taint Analysis on Android Native Code]()
-:::warning
-补全实验 
-:::
-- TDSC 22, Cong Sun, Yuwan Ma, Dongrui Zeng, Gang Tan, Siqi Ma, and Yafei Wu
+#### [Toward efficient interactions between Python and native libraries](https://dl.acm.org/doi/10.1145/3468264.3468541)
+- FSE 21, Jialiang Tan, Yu Chen, Zhenming Liu, Bin Ren (William & Mary), Shuaiwen Leon Song (U~ of Sydney), Xipeng Shen, Xu Liu (North Carolina State U~)
 - **问题**：
-  - 安卓app中的native code是不安全的，因为它对传统静态分析而言是一个黑盒。现存静态信息流分析只能分析bytecode层面，不能分析native code。
-  - 两种缺陷：native和bytecode互为source、sink，相互调用；source、sink都在bytecode，经由native code传播（bytecode调用native，并且native调用bytecode）。
-  - [JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)不够精确
+  - 跨语言程序中，上层开发者不了解下层的实现，写出了效率较低的代码。如：没有发现可以向量化的矩阵操作、循环效率低。
+  - Python的profiling工具解决不了这个问题，因为没法进入native代码；native profiling工具不知道Python的语义，找不到根本来源（*感觉这理由有点抽象*）
 - **贡献**：
-  - uDep：结合DroidSafe，识别敏感信息流。动静态结合的方法，静态的二进制控制流分析+基于变异识别native code的污染效果
-  - 给native code建模方法：基于变异测试得到的输入返回关系；
+  - PieProf：轻量定位Python程序中低效率交互的profiler；基于硬件的性能监控单元（PMU），用硬件排错寄存器（hardware debug register）识别冗余内存操作（CL算法）
+  - 研究并分类Python和native之间的低效率互操作
+  - 对17个app检查并识别出低效率互操作
+- **挑战**：
+  - 减少FP，避免跟踪Python解释器和跨语言交互的内存操作
+  - 穿透Python和C栈，建立无锁的调用上下文树，找到导致冗余内存访问的跨语言互操作。
+  - 避免因垃圾回收导致工具崩溃
+- **背景**
+  - CL算法：选取一小块内存单元，用硬件跟踪对它们的访问。若对同一单元接连的写入是相同的，就认定第二次写入是多余的。标记相关的指令和函数。
+    1. 已知一串内存访问序列
+    2. 对于新的内存访问，判断它是否需要被跟踪。CL保证每个内存访问被均匀采样。
+    3. 若需要被跟踪，存放指令的地址在debug寄存器。
+    4. 运行到debug寄存器时中断，检查此次访问是否冗余。
+  - PMU：可以捕捉cpu周期数、cache没中；
+  - 精确事件采样（PEBS）：获取内存访问的地址和指令；
+  - debug寄存器：断点，在pc运行到指定地址时trap
+- 低效率互操作分类：
+  - 没有充分利用slicing：![](./2023-08-20-17-54-39.png)。可以整个切片进行运算，却分开来一个个算。
+  - 用相同参数重复调用无副作用的native函数：![](./2023-08-20-17-58-36.png)，一个batch的`theta`是相同的，因此`a`、`b`、`rotate_mix`、`self._mtx`都是相同的。优化可得2.8X提升。
+  - 算法问题
+  - API误用：![](./ 2023-08-20-22-00-08.png)![](./2023-08-20-22-00-24.png) *这个例子其实和没有利用slicing重复*
+  - 循环不变式计算：![](./2023-08-20-22-02-51.png)![](./2023-08-20-22-04-26.png) *这个优化在编译的时候也经常做，在Python没法做是因为它是对象。但是我们指导这是矩阵，就相当于数字。我们知道方法是无副作用的，就是运算。本质上就是无副作用方法的重复调用。*
+  - *总结出了几个类别，又何必那么复杂监控程序运行？slicing问题或许可以建模。无副作用方法调用可以借鉴编译优化。*
+- 低效率互操作模式：
+  - 重复读取取相同值的相同对象 —— 内存重复读
+  - 重复返回相同值的相同对象 —— 内存重复写
 - **方法**：
-  1. 用IDA做二进制静态分析
-    - 查找对Java方法的调用，是否是source/sink，鉴定为type 1缺陷。
-    1. 从二进制中提取代码，发现JNI函数的调用`CallXXXMethod`，判断是否是source/sink
-    2. 反向查找使用这些source/sink的native函数
-    3. 判断这些native函数是否在Java端声明，加入到DroidSafe的source/sink列表
-    4. 对于添加进source列表代理方法，假如其native函数返回类型`T`，则污染代理方法的返回值或输出参数为兼容类型`T'`
-  2. 基于变异算法分析native方法的输入输出依赖
-     - 视native代码为黑盒，输入是参数，输出是返回值和对象类型参数
-     - 改变输入，观察输出是否变化。使路径尽量覆盖。
-  3. 利用语义和输入输出依赖，生成stub： 
-     - 基本 -> 基本：直接把输入类型转换成输出（描述两者的污染传播关系） 
-     - 基本 -> 非基本：用`addTaint`把输入添加到输出的域`taint`（*详情要看DroidSafe*）
-     - 非基本 -> 基本：把`getTaint(<input>)`赋值给输出。
-     - 非基本 -> 非基本：若类型兼容，直接赋值；否则使用`getTaint`、`addTaint`。
-- **实验**：
-  - 数据集：
-    - S1（143）：NativeFlowBench、DroidBench
-    - S2（5096）：AndroZoo
-    - S3（2052）：Drebin、DroidAnalytics、CIINvesAndMal1029中的恶意软件
-  - baseline：DroidSafe、JN-SAF
-  - 指标：
-    - 准确率：S1
+  - 沙盒和保卫：
+    - debug寄存器中断会唤起PieProf，中断Python运行时。若Python执行特定任务会导致错误。
+    - 列出一些函数，给他们加一个包装。包装中暂时休眠PieProf，退出时启动。
+    - 正在跟踪的地址在PyObject内部，可能被GC回收：添加引用。
+    - 把内存地址转成PyObject：
+      - PyObject存在于一定范围，可筛选
+      - 若地址刚好是PyObject开头，能成功用动态类型转换
+      - 对allocator进行搜索（*什么是allocator？它记录了所有对象的地址？*）
+  - 测量方法：
+    - 防止跟踪到解释器的内存访问
+    - 防止同一个native函数的重复内存访问（因为我们关注的是不同函数之间的关系，同一个函数代码使然必然重复访问）
+    - 过滤指令地址，限制在native function之内
+    - 过滤内存访问地址，不在无效范围。如PyObject开头的地址，保存的是引用计数。垃圾回收对引用计数的访问一定很频繁。*怎么hack进Python运行时获得所有对象的地址？*
+    - 对于一个冗余对，检查Python运行时状态是否相同，是则表示同一个native function 调用。*这里的native function似乎指的只是接口层，不过从上述低效率模式可看出，确实只关注接口层的冗余即可。*
+  - 构建调用上下文树：
+    1. 用libunwind获得native调用路径（整个程序，包含解释器的），提取出`_PyEval_EvalFrameDefault`。
+    2. 映射PyFrame到Python代码调用
+- **实验**：![](./2023-08-20-23-12-58.png)
+  - 数据：17个项目，
+- **评价**：这篇文章举的例子都是真实机器学习框架里面的，很好奇作者是怎么找到这么多例子。 
+
 ## 研究组
 
 ### [Gang Tan]()
