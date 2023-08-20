@@ -462,10 +462,7 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
       - ESP
       - 每个控制流边有n个状态，每个包含FSM状态 + 基本数据类型的常量值 + Java对象的类
     - 上下文敏感：是为了应对开发者用抛出异常的API实现多次封装，导致不同类型的异常被混在一起。
-      - 上下文：caller + FSM状态
-    
-      
-    
+      - 上下文：caller + FSM状态    
 - 不安全操作：
   - 白名单：清理资源（？）、立即返回或清除异常是安全行为
   - 污点分析的源：都是指针
@@ -622,7 +619,6 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - **问题**：多语言软件的漏洞可能跨语言或者在语言边界上。目前大部分跨语言的安全分析集中在JNI上。另外一些工具不够实用：语言扩展性不足、规模扩展性不足。
 - **挑战**：语义异构、效率
 - **贡献**：
-
 - **方法**：静态与动态分析相结合，动态分析弥补因语言的不同而导致静态没法分析的部分；静态分析指导动态分析插桩，以达到较好的延展性和效率。
   - 特定语言分析：生成语言无关的符号表示（LISR）![](./2023-05-21-22-34-20.png)
     - 3种指令：赋值、调用、返回。**field-insensitive**
@@ -642,7 +638,7 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
     - 线程间数据流：跨线程，有def-use关系且满足时序，而且涉及的是共享或全局变量。
     - 线程内数据流：类似 
   - 漏洞分析
-  - - **完全没有涉及跨语言**，其中最重要的是没有说如何处理语言边界，SDA的时候也没有说如何将两种语言的数据流对齐。只能猜测在生成LISR时透过了语言边界用统一的符号来表示。
+  - **完全没有涉及跨语言**，其中最重要的是没有说如何处理语言边界，SDA的时候也没有说如何将两种语言的数据流对齐。只能猜测在生成LISR时透过了语言边界用统一的符号来表示。
 - **实现**：面向Python-C
   - 输入：程序、配置（sources/sinks、安全分析）、程序执行输入。
   - C：静态分析、静态插桩用LLVM，
@@ -673,6 +669,63 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - field-sensitive：不同实例的属性分开对待。
 :::
 
+#### [Combinations of Reusable Abstract Domains for a Multilingual Static Analyzer?]()
+:::warning
+补全 
+:::
+- Matthieu Journault, Antoine Mine, Raphael Monat, and Abdelraouf Ouadjaout (Sorbonne U~)
+- **背景**：
+  - 抽象解释：程序语义的近似，可以理解为解释器，但是这种解释器运行在所有的输入和路径，并且忽略语义细节。
+- **贡献**：
+  - MOPSA：模块化静态分析框架，可以结合、自定义多种抽象域
+  - 基于统一可扩展语言：AST。
+    - 语法可扩展：语法用OCaml定义
+
+#### [JET: Exception Checking in the Java Native Interface](https://dl.acm.org/doi/10.1145/2048066.2048095)
+- OOPSLA 11, Siliang Li, Gang Tan (Lehigh U~)
+- **问题**：native方法关于异常的声明与实现之间的不一致，Java端native方法的抛出异常声明不符合native代码。
+- **方法**：
+  - 库代码与接口代码分离
+  - 查找异常：
+    - 路径敏感： 
+    - 上下文敏感
+- **评价**：[这篇论文](#exception-analysis-in-the-java-native-interface)的前置工作。
+
+#### [μDep: Mutation-Based Dependency Generation for Precise Taint Analysis on Android Native Code]()
+:::warning
+补全实验 
+:::
+- TDSC 22, Cong Sun, Yuwan Ma, Dongrui Zeng, Gang Tan, Siqi Ma, and Yafei Wu
+- **问题**：
+  - 安卓app中的native code是不安全的，因为它对传统静态分析而言是一个黑盒。现存静态信息流分析只能分析bytecode层面，不能分析native code。
+  - 两种缺陷：native和bytecode互为source、sink，相互调用；source、sink都在bytecode，经由native code传播（bytecode调用native，并且native调用bytecode）。
+  - [JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)不够精确
+- **贡献**：
+  - uDep：结合DroidSafe，识别敏感信息流。动静态结合的方法，静态的二进制控制流分析+基于变异识别native code的污染效果
+  - 给native code建模方法：基于变异测试得到的输入返回关系；
+- **方法**：
+  1. 用IDA做二进制静态分析
+    - 查找对Java方法的调用，是否是source/sink，鉴定为type 1缺陷。
+    1. 从二进制中提取代码，发现JNI函数的调用`CallXXXMethod`，判断是否是source/sink
+    2. 反向查找使用这些source/sink的native函数
+    3. 判断这些native函数是否在Java端声明，加入到DroidSafe的source/sink列表
+    4. 对于添加进source列表代理方法，假如其native函数返回类型`T`，则污染代理方法的返回值或输出参数为兼容类型`T'`
+  2. 基于变异算法分析native方法的输入输出依赖
+     - 视native代码为黑盒，输入是参数，输出是返回值和对象类型参数
+     - 改变输入，观察输出是否变化。使路径尽量覆盖。
+  3. 利用语义和输入输出依赖，生成stub： 
+     - 基本 -> 基本：直接把输入类型转换成输出（描述两者的污染传播关系） 
+     - 基本 -> 非基本：用`addTaint`把输入添加到输出的域`taint`（*详情要看DroidSafe*）
+     - 非基本 -> 基本：把`getTaint(<input>)`赋值给输出。
+     - 非基本 -> 非基本：若类型兼容，直接赋值；否则使用`getTaint`、`addTaint`。
+- **实验**：
+  - 数据集：
+    - S1（143）：NativeFlowBench、DroidBench
+    - S2（5096）：AndroZoo
+    - S3（2052）：Drebin、DroidAnalytics、CIINvesAndMal1029中的恶意软件
+  - baseline：DroidSafe、JN-SAF
+  - 指标：
+    - 准确率：S1
 ## 研究组
 
 ### [Gang Tan]()
@@ -691,4 +744,4 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 
 ----
 ### 记录
-继续搜索：JNI, FFI, foreig n function, nodejs addons, cgo, android hybrid app, language boundary
+继续搜索：cross language, inter-language, multi-language, JNI, foreign function, nodejs addons, android hybrid app, native
