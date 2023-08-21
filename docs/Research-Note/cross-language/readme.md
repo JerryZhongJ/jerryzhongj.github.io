@@ -661,6 +661,57 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
     - 准确率：S1
 
 
+#### [Multi-language static code analysis on the LARA framework](https://dl.acm.org/doi/10.1145/3460946.3464317)
+- SOAP 21, Gil Teixeira, João Bispo, Filipe F. Correia (Faculty of Engineering, U~ of Porto)
+- **问题**：
+  - 许多语言的很多概念是共通的，这让多语言分析成为可能。但是不同语言仍有不同，如语法特性。
+  - 关于Lara：若结合不同语言的规约合并成一个，会污染原来的规约，并且破坏兼容性。
+- **贡献**：
+  - 多语言分析：基于LARA。Lara通过一个语言规约来定义对目标语言的编译器。他们改进成支持多个，并且支持共通的语言规约。 
+- Lara：
+  - *同一个组之前的成果*。
+  - Java编写的源对源编译器。
+  - 允许用JavaScript脚本来自定义语言无关的分析。
+  - 对一个语言规约，生成编译器的Java代码
+- **方法**：
+  - 共通的语言规范没有定义组合关系，对一个节点的询问都是基于它的后代。相当于它提供了虚拟的AST，每次询问都会在具体语言的AST下遍历。（*我也没搞懂在说什么，需要看他们关于Lara的工作*）
+  - ![](./2023-08-21-13-25-47.png)
+
+#### [Gillian, part i: a multi-language platform for symbolic execution](https://dl.acm.org/doi/10.1145/3385412.3386014)
+:::warning
+补充完整
+:::
+- PLDI 20, José Fragoso Santos, Petar Maksimović, Sacha-Élie Ayoun, Philippa Gardner (Imperial College London)
+- **问题**：
+  - 开发一个语言的符号执行 需要很多努力，因此迁移至另一个语言就更加困难了。
+- **背景**：
+  - symbolic-lifting：把具体语言的解释器提升至符号解释。
+  - semantic framework：用统一的规约语言来描述不同编程语言，然后生成不同的分析工具。
+  - IR based：先编译成统一的的IR，再基于IR做符号分析。
+  - 前两个方法允许开发者使用预置的数据结构（list、map）来实现内存模型，符号推理是基于这些数据结构的（语言无关 ）；第三个方法提供了一系列内存模型，但是不能添加新的。
+- **贡献**：
+  - Gillian：基于IR的多语言符号执行工具
+    - 允许自定义内存模型
+    - 符号推理是语言相关的
+    - 符号推理的正确性需要特定的内存模型符合几条引理。
+    - 基于参数化IR：GIL
+  - 证明了Gillian的可靠性（parametric soundness results）（*啥玩意儿？*）
+- **方法**：
+  - GIL：
+    - 语法：![](./2023-08-21-16-53-26.png)
+      - 值：number、字符串、boolean、非解释符号、types、procedure、list
+      - 表达式：变量、运算
+      - 指令：赋值、条件跳转、动态调用、返回、退出
+      - 特殊指令：动作$x = \alpha(e)$、$x = uSym_j$生成非解释符号、$x = uSym_i$生成解释符号
+      - 非解释符号：语言有关的常量（`undefined`、`null`）、内存地址、对象；解释符号：逻辑变量
+    - 语义：![](./2023-08-21-17-32-16.png)
+      - 参数化的，以状态模型为参数
+      - 状态模型：状态 + 状态的取值 + 动作 + 迁移函数
+      - ==未完待续==
+- **实现**：
+  - JavaScript/C符号执行
+
+####
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
