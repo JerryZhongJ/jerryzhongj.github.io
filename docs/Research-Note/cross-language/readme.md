@@ -711,7 +711,46 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - **实现**：
   - JavaScript/C符号执行
 
-####
+#### [CLCDSA: Cross Language Code Clone Detection using Syntactical Features and API Documentation]()
+- ASE 19, Kawser Wazed Nafi, Tonny Shekha Kar, Banani Roy, Chanchal K. Roy and Kevin A. Schneider (U~ of Saskatchewan)
+- **问题**：
+  - 代码克隆会导致维护难度：一边的代码改了，另一边也要改；从而带来隐患，降低代码质量。
+  - *可能缺少实际意义：跨语言代码克隆相当于重新开发了，开发者是理解了之后再写的，而且测试也是另外写的，与无脑的复制粘贴不同。本文的intro举的简单的例子。*
+  - 已有跨语言代码克隆检测：CLCMiner利用代码历史和相似度、LLCCA基于具体语法树表示
+- **贡献**：
+  - CLCDSA：不需要中间表示或限制 
+  - 提取9个语法特征，比较cosine 相似度
+- **方法**：
+  1. 特征：
+    - 在之前的研究中，他们筛选了SQO-OSS中评价代码质量的24个特征，发现其中9个在Java、C#、Python表现得一样。
+  2. 预处理：
+    - 去除注释、字符串常量
+    - 生成AST，用正则表达式提取特征
+    - 提取API调用
+  3. 行为过滤：
+     - 前人的做法：分析源代码的token比较语义相似度、比较API调用的语义相似度。
+     - 前人的发现：不同语言的API调用相似度可以从文档相似度中学习、检测出来（*什么叫学习检测出来？*）
+     - **假设**：假如两个语言的API任务相同，那么文档的语义相同。如Java的`println`和C#的`write`。
+     - 用word2vec，计算文档相似度来计算API的相似度
+     - 对于可能克隆代码对，取一边的一个API调用，获取它和另一边的所有API调用的相似度，取最高的为一对。（*单射？*）最后取每一对相似度的平均值。
+     - 低于阈值的代码对被去除
+  4. 计算9个特征的cosine相似度，与阈值比较；或者用DNN模型直接判断是否克隆。
+- **实现**：
+  - 生成AST：AntkrV4
+  - 行为过滤：
+    - DNN模型：word2vec-GoogleNews-vectors
+    - 数据：API文档的第一句话
+  - 判断克隆：
+    - 模型：Siamese Architecture Neural Network
+    - 数据集：
+      - 开源编程比赛的Java、C#、Python答案（78k）：AtCoder、Google CodeJam、CoderByte。*这个数据选择得很聪明。*
+      - *其实也没那么好，虽然都是回答同一个问题，但是他们的算法不一定一样，回答之间的相似度没那么高。而且同一个算法，不同的人实现得也是千差万别。假如能发现这种相似度，那就是很高层面的相似度了。*
+- **实验**：
+  - 数据集：上述竞赛回答
+  - 指标：precision、recall、f1
+  - 比较：LICCA、CLCMiner、AST Learner
+  - 结果：DNN的方法比cosine相似度好；本文方法f1远远大于其他工具。
+  
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
