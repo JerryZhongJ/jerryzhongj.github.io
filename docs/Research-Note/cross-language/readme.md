@@ -750,7 +750,31 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
   - 指标：precision、recall、f1
   - 比较：LICCA、CLCMiner、AST Learner
   - 结果：DNN的方法比cosine相似度好；本文方法f1远远大于其他工具。
-  
+- **评价**：看岔了，这不算做静态程序分析，算了，看都看了。
+
+ #### [DroidNative: Automating and optimizing detection of Android native code malware variants](https://www.sciencedirect.com/science/article/pii/S016740481630164X)
+ ::: warning
+ 补充
+ :::
+ - Computers & Security 17, Shahid Alam (Gebze Technical U~), Zhengyang Qu, Yan Chen(Northwestern U~), Ryan Riley (Qatar U~), Vaibhav Rastogi (U~ of Wisconsin-Madison)
+ - **问题**：
+   - 恶意软件几乎集中在安卓
+   - 恶意软件会用代码混淆来应对基于签名的检测（*可能是基于模式吧*）
+   - 对native code的恶意检测很少
+- **贡献**：
+  - DroidNative：跨平台（x86、ARM）工作于native code层面，可以检测bytecode和native的恶意软件。native code这里指的是二进制。
+    - 用静态分析，着眼于控制流的模式，控制流不会被代码混淆影响。
+    - 用ART把bytecode编译成native code
+  - 改进恶意分析中间语言（MAIL）
+    - 添加ARM
+    - 提升准确率和速度
+- **背景**;
+  - 安卓会动态加载代码
+  - 恶意分析中间代码：保留二进制代码中高阶的表示，如控制流信息、函数、API调用和模式
+- **方法**：
+  - MAIL：
+    - 8种语句、21个模式。每条语句都标记了模式，用作比较、匹配、标记CFG
+    - ![](./2023-08-26-22-27-46.png)
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
@@ -874,6 +898,15 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
   - 数据：17个项目，
 - **评价**：这篇文章举的例子都是真实机器学习框架里面的，很好奇作者是怎么找到这么多例子。 
 
+#### [SafeCheck: Safety Enhancement of Java Unsafe API]()
+:::warning
+补充 
+:::
+- ICSE 19
+
+
+#### [Dual-force: understanding WebView malware via cross-language forced execution](https://dl.acm.org/doi/10.1145/3238147.3238221)
+- ASE 18
 ## 研究组
 
 ### [Gang Tan]()
