@@ -775,6 +775,52 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
   - MAIL：
     - 8种语句、21个模式。每条语句都标记了模式，用作比较、匹配、标记CFG
     - ![](./2023-08-26-22-27-46.png)
+
+#### [Towards Cross-Platform Cross-Language Analysis with Soot](https://dl.acm.org/doi/10.1145/2931021.2931022)
+- SOAP 16，  Steven Arzt, Tobias Kussmaul (TU Darmstadt),Eric Bodden (Paderborn U~)
+- **问题**：
+  - 不同语言的跨语言分析差别很大
+  - 用同一个IR支持不同的语言是困难的
+- **贡献**：
+  - 用Soot来作跨语言静态分析Java/C#
+  - 提出Common Intermdeiate Language（CIL），实现CIL不需要修改Jimple。扩展Soot使CIL也成为.net和Mono的bytecode。
+- CIL：
+  - 代码组织：class - namespace（package） - assembly
+  - 类型：
+    - 支持对象和结构体，int和float也是结构体。
+    - Jimple中结构体也是类，但是它的传递用clone。
+    - C#中允许引用传参，为表达这种情况，此时就不clone。
+
+#### [Understanding and fixing multiple language interoperability issues: the C/Fortran case](https://dl.acm.org/doi/10.1145/2884781.2884858)
+- ICSE 16, Nawrin Sultana, Justin Middleton, Jeffrey Overbey, Munawar Hafiz (Auburn U~)
+- **问题**：多语言的互操作没有仔细研究过
+- **贡献**：
+  - 对C/Fortran做互操作的case study，揭示接口暴露、数据类型共享、内存管理、数据共享机制。
+
+#### [On the Static Analysis of Hybrid Mobile Apps](https://onlinelibrary.wiley.com/doi/10.1002/spe.2276)
+- Achim D. Brucker(The U~ of Sheffield) and Michael Herzberg (Vincenz-Priessnitz-Strasse)
+- **问题**：
+  - 混合app有安全问题，继承了网页pp和原生app的安全问题
+  - 插件是打通WebView沙盒和原生环境的一个洞，XSS攻击可能利用插件
+- **背景**：
+  - Apache Cordova是一个多平台的混合pp框架
+  - JavaScript通过`exec`调用Java端，Java通过回调返回到JavaScript
+  - `exec`会调用Java端的`execute`方法，方法中会根据传入的`action`字符串选择相应的动作
+  - Java回调JavaScript通过调用`CallbackContext`的3个方法：`success`、`error`、`sendPluginResult`
+- **贡献**：
+  - 针对Apache Cordova（JavaScript/Java）的静态分析：构建调用图
+  - 
+- **方法**：通过4种启发式的处理应对这个框架的特性
+  - 模拟`exec`：把`exec`替换成stub函数，stub函数中直接调用回调函数
+  - 模拟模块载入：把模块导出的对象变成全局的，也就是把`module.exports`换成一个全局变量。
+  - 确定Java端的callsite和JavaScript的callee（success、fail）：
+    - 找到所有从`execute`到`CallbackContext`方法的调用链
+    - 得到`execute`的控制流图，已知JavaScript传入的`action`字符串常量，可以得知在哪里调用的`CallbackContext`的哪个方法
+  - 过滤：
+    - 挑战：目前适用于大型JavaScript项目的分析是field-based的，一些plugin提供的接口名字会混淆
+    - 利用文件名等（*？？？*）信息过滤掉
+- **实现**：
+  - WALA
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
@@ -907,6 +953,10 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 
 #### [Dual-force: understanding WebView malware via cross-language forced execution](https://dl.acm.org/doi/10.1145/3238147.3238221)
 - ASE 18
+
+#### [MUSEUM: Debugging real-world multilingual programs using mutation analysis](https://www.sciencedirect.com/science/article/pii/S0950584916302427)
+- IST 17, Shin Hong (Handong Global U~), Taehoon Kwak, Yiru Jeon, Yunho Kim, Moonzoo Kim (Korea Institute of Science and Technology), Byeongcheol Lee, Bongseok Ko (Gwangju Institute of Science and Technology)
+- 
 ## 研究组
 
 ### [Gang Tan]()
