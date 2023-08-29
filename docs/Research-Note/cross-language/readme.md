@@ -821,6 +821,41 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
     - 利用文件名等（*？？？*）信息过滤掉
 - **实现**：
   - WALA
+
+#### [Cross-language program slicing for dynamic web applications](https://dl.acm.org/doi/10.1145/2786805.2786872)
+- FSE 15, Hung Viet Nguyen, Tien N. Nguyen (Iowa State U~), Christian Kästner (Carnegie Mellon U~)
+- **问题**：
+  - web应用难以做切片：多语言、客户端代码动态生成
+  - 多语言：PHP/SQL - HTML/JS
+  - 客户端代码动态生成：客户端程序实体嵌入在PHP字符串常量中，程序切片需要识别这些程序；客户端代码取决于服务器代码的条件分支。
+- **背景**
+  - 正向程序切片：对某一个程序点的某个变量（slicing citerion），切片表示程序中所有会被变量影响的部分
+  - 瘦切片：基于数据流的；传统切片：基于数据和控制流。 
+- **贡献**：
+  - WebSlice：
+    - 基于实体间的数据流（def-use）
+    - 利用符号执行、可变性有关的parser
+    - 面向PHP、SQL、HTML、JS。
+- **方法**：
+  - 符号执行PHP代码，得到输出
+    - 输出：![](./2023-08-29-15-44-52.png)
+    - $\alpha$、$\beta$表示条件
+  - 用符号分析（顺便）构建PHP、SQL的数据流
+    - 数据流包含def-use和信息流
+    - 信息流：同一语句内，使用的变量会影响定义的变量，比如$x = y$，存在$y \rightarrow x$的信息流。 
+  - 分析输出以构建客户端代码（HTML、JS）的数据流
+    - 变化有关的解析：因为上面的输出是带条件的代码
+    - 解析结果：可变的DOM，node带条件。DOM里面也包含带条件的JS代码的AST
+    - JS的数据流分析也是用符号执行
+    - 
+  - 连接数据流
+  - 切片
+- **实现**：
+  - 符号执行：前面的工作
+  - 数据流分析：TypeChef
+- **评价**：这里的跨语言不太一样。其他跨语言的场景都是，一个语言调用了用另外一个语言写的库。语言交互的方式是传参和返回值。而这里的跨语言是JS代码是由PHP生成的。
+  - JS代码不是固定的，这里研究的是变化的JS代码，但是这种变化是由PHP运行时带来的。
+  - 跨语言交互的方式是代码生成，JS代码从PHP得到的一个值不是运行时得到，而是静态hardcore进代码中的。而PHP从HTML获得一个值的方式是http的输入。
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
@@ -965,6 +1000,8 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 
 ### [Sukyoung Ryu(KAIST)]()
 
+### [Tien N. Nguyen]()
+
 ## 资源
 
 
@@ -975,4 +1012,4 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 
 ----
 ### 记录
-继续搜索：cross language, inter-language, multi-language, JNI, foreign function, nodejs addons, android hybrid app, native
+继续搜索：cross language, inter-language, multi-language, JNI, foreign function, nodejs addons, android hybrid app, native, multilingual
