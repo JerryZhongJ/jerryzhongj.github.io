@@ -811,12 +811,12 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
   - 针对Apache Cordova（JavaScript/Java）的静态分析：构建调用图
   - 
 - **方法**：通过4种启发式的处理应对这个框架的特性
-  - 模拟`exec`：把`exec`替换成stub函数，stub函数中直接调用回调函数
-  - 模拟模块载入：把模块导出的对象变成全局的，也就是把`module.exports`换成一个全局变量。
-  - 确定Java端的callsite和JavaScript的callee（success、fail）：
+  1. 模拟`exec`：把`exec`替换成stub函数，stub函数中直接调用回调函数
+  2. 模拟模块载入：把模块导出的对象变成全局的，也就是把`module.exports`换成一个全局变量。
+  3. 确定Java端的callsite和JavaScript的callee（success、fail）：
     - 找到所有从`execute`到`CallbackContext`方法的调用链
     - 得到`execute`的控制流图，已知JavaScript传入的`action`字符串常量，可以得知在哪里调用的`CallbackContext`的哪个方法
-  - 过滤：
+  4. 过滤：
     - 挑战：目前适用于大型JavaScript项目的分析是field-based的，一些plugin提供的接口名字会混淆
     - 利用文件名等（*？？？*）信息过滤掉
 - **实现**：
@@ -837,25 +837,75 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
     - 利用符号执行、可变性有关的parser
     - 面向PHP、SQL、HTML、JS。
 - **方法**：
-  - 符号执行PHP代码，得到输出
+  1. 符号执行PHP代码，得到输出
     - 输出：![](./2023-08-29-15-44-52.png)
     - $\alpha$、$\beta$表示条件
-  - 用符号分析（顺便）构建PHP、SQL的数据流
+  2. 用符号分析（顺便）构建PHP、SQL的数据流
     - 数据流包含def-use和信息流
     - 信息流：同一语句内，使用的变量会影响定义的变量，比如$x = y$，存在$y \rightarrow x$的信息流。 
-  - 分析输出以构建客户端代码（HTML、JS）的数据流
+  3. 分析输出以构建客户端代码（HTML、JS）的数据流
     - 变化有关的解析：因为上面的输出是带条件的代码
     - 解析结果：可变的DOM，node带条件。DOM里面也包含带条件的JS代码的AST
     - JS的数据流分析也是用符号执行
     - 
-  - 连接数据流
-  - 切片
+  4. 连接数据流
+  5. 切片
 - **实现**：
   - 符号执行：前面的工作
   - 数据流分析：TypeChef
 - **评价**：这里的跨语言不太一样。其他跨语言的场景都是，一个语言调用了用另外一个语言写的库。语言交互的方式是传参和返回值。而这里的跨语言是JS代码是由PHP生成的。
   - JS代码不是固定的，这里研究的是变化的JS代码，但是这种变化是由PHP运行时带来的。
   - 跨语言交互的方式是代码生成，JS代码从PHP得到的一个值不是运行时得到，而是静态hardcore进代码中的。而PHP从HTML获得一个值的方式是http的输入。
+
+#### [Automatic generation of library bindings using static analysis](https://dl.acm.org/doi/10.1145/1542476.1542516)
+- PLDI 09, Tristan Ravitch, Steve Jackson, Eric Aderhold, Ben Liblit (U~ of Wisconsin–Madison)
+- **问题**：
+  - 目前binding code是用手写的
+  - 现有的binding生成工具：SWIG、ctypeslib、各项目自己的工具，基于C头文件
+  - 基于头文件的方法一般需要标记，是为了利用高层代码的特性（*？*）
+- **贡献**：
+  - 论证了自动化生成binding code是必要的
+  - 提出了根据无标记库代码生成binding code的策略，基于对库代码实现部分的静态分析。
+  - 面向Python/C
+- **方法**
+  1. 预处理：
+     - 数组读取改成指针操作
+     - 所有函数只有唯一出口
+     - SSA形式
+     - 做了全局别名分析
+  2. 静态分析
+    - 模块（库）分析、过程间、上下文不敏感、路径不敏感
+    - 信息由callee传向caller
+    - 输入、输出：接口描述，分析的fact
+    - 发现输出参数
+      - 是指针、写入早于读取
+      - 输入参数：只有读；输入兼输出参数：读后写
+      - 对于写：考虑must别名；对于读：考虑may别名。
+    - 发现数组：
+      - 是指针、参与运算且结果被解引用
+      - 通过进程间信息流倒推caller的传入的实参是数组
+      - 可以通过发现元素也是数组来推出数组的结构，但是没有长度。
+      - 例外：可能通过全局的结构体中的数组来传递。
+    - 内存管理：
+      - 发现构造器：
+        - 返回值是已知构造器的返回值
+        - 返回值是$\phi$，但是所有输入都能被现有的析构器释放（*？*） 
+      - 发现析构器：
+  3. 生成binding：
+     - 用ctypes
+     - 对C函数生成Python wrapper函数：
+       - 利用上述发现的输出参数，确定输入输出参数数量
+       - 对于数组类型，wrapper运行时检查参数类型为list，并使用ctypes创造一个数组，进行浅拷贝。根据数组结构来嵌套构造数组。
+       - 对于构造器，将返回的指针包装为Python对象，将Python对象的`__del__`和析构器绑定
+       - 对于析构器（意味着显式调用析构器），wrapper参数为Python对象，则解除被析构参数的`__del__`，防止重复析构。
+       - 对于有逃逸参数的函数，解除它们的`__del__`。
+- **实现**：
+  - 生成SSA：LLVM、CLang
+  - 别名分析：Anderson
+- **实验**：
+  - 数据集：4个开源C库，GLPK，libarchive，libical，GSL
+  
+  
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
