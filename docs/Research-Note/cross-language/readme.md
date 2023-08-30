@@ -905,7 +905,46 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - **实验**：
   - 数据集：4个开源C库，GLPK，libarchive，libical，GSL
   
-  
+#### [Finding bugs in java native interface programs](https://dl.acm.org/doi/10.1145/1390630.1390645)
+- ISSTA 08, Goh Kondoh Tamiya Onodera (Tokyo Research Laboratory)
+- **问题**：
+  - 开发JNI是易错的：![](./ 2023-08-30-16-14-20.png)
+- **贡献**：
+  - 静态分析检测：错误检查的bug、内存泄漏、无效使用局部引用、关键区的JNI调用
+- **背景**：
+  - 缺少错误检查：忘记在调用Java方法后检查有没有异常，而在此后调用第二个Java方法，VM会忽略前面的exception。在某些VM会动态报出warning。
+  - 内存泄漏：native代码可以调用JNI函数，申请一些资源，如`GetStringChars`
+  - 非法使用局部引用：当native代码引用Java对象时，分为局部和全局，全局变量应该用全局引用。
+  - 关键区调用JNI：可能导致关键区被阻塞
+- **方法**：
+  - 缺少错误检查：
+    - 类型状态（typestate）分析，也是数据流分析
+    - ![](./2023-08-30-17-03-37.png)
+  - 内存泄漏：同上类似
+  - 关键区调用：同上
+  - 非法使用局部引用：语法检查
+- **实现**:
+  - BEAM：过程间分析（*自己写的数据流分析？有点牛b吧*）
+- **实验**：
+
+
+#### [Checking Type Safety of Foreign Function Calls](https://dl.acm.org/doi/10.1145/1065010.1065019)
+- PLDI 05, Michael Furr, Jeffrey S. Foster (U~ of Maryland)
+- **问题**：跨语言的类型系统、数据表示、运行时环境不死他，正确性难以保证。
+- **贡献**：
+  - 多语言类型推理，可以检查类型和垃圾回收问题。
+  - 这个类型系统关注物理表示
+  - 面向OCaml/C，其中OCaml是主语言。
+- **背景**：
+  - 所有OCaml类型在C中都是`value`类型，被typedef为`long`（在C中，这是意味着相同的类型）。但它的物理表示并等于其含义，需要用宏`Val_int`、`Int_val`来和整型相互转换，而开发者可能把宏用在错误的类型上。
+  - `value`类型可能包装了一个值，或者指向存储着值的一个块。C中用`Is_long`判断是否是指针。
+  - nullary constructor出现在OCaml的sum类型中，相当于枚举的成员。也可理解为一种类型，但这种类型只有一个取值，就是它在sum type的序号。
+  - C有宏`Val_int`、`Int_val`转换`value`
+  - C用`CAMLparam`、`CAMLlocal`向OCaml的堆注册参数和局部变量，用来表示C指针指向这些值。用`CAMLreturn`释放。
+  - OCaml有垃圾回收
+- 类型系统
+  - ![](./2023-08-30-21-13-05.png)
+  - 就是把对方的类型加入到自己的类型系统中。
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
