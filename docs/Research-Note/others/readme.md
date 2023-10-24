@@ -86,7 +86,7 @@ tag:
 
 #### [An Empirical Study of Functional Bugs in Android Apps](https://dl.acm.org/doi/10.1145/3597926.3598138)
 - ISSTA 23
-- **调研对象** 
+- **对象** 
   - 安卓app的functional bugs: 非崩溃的bug
 - **RQ**
   - root cause
@@ -106,7 +106,7 @@ tag:
     - 可复现的，有patch，在通用android手机上：265个
     - 对每个bug得到：其app、bug patch、bug复现视频
   - 分析bug：
-    - 建立分类：open card sorting approach
+    - 建立分类：**open card sorting approach**
       - 每次随机选40个bug，2个作者独立研究、标记它们的root cause、症状、oracle。再合并
       - 重复10次来搞定400个bug。
       - 个人耗时6个月。
@@ -138,3 +138,45 @@ tag:
 - **感想**：
   - 实验过程的每一步都可以拿来大书特书（比如筛选app都能写2-3步），看你怎么写，要细心记录、实时跟进。
   - 怎么一篇论文这么多内容？既有实证分析，还有方法？
+
+#### An Empirical Study on TensorFlow Program Bugs
+- **对象**：
+  -  基于Tensorflow的应用的bug
+-  **RQ**：
+   - symptoms、root cause
+   - 检测bug的挑战和用户处理方式
+   - 定位bug的挑战和用户处理方式
+- **方法**：
+  - 收集bug：
+    - StackOverflow：
+      - “tensorflow answers:1 -how -install -build”
+      - 人工审查500个，87个是关于bug 
+    - Github commit：
+      - 11个项目
+      - “bug, fix, wrong, error, nan, inf, issue, fault, fail, crash”，过滤掉“typo”
+      - 时间跨度：2-3年
+      - 88 bugs，阅读相关issue和pull request
+    - 总共175 bugs
+  - root cause和symptom：
+    - 阅读commit的changes、commit messages等
+    - 阅读回答
+    - 尝试复现bug，151/175
+    - 人工总结
+  - bug detection：两个问题组成的4种答案
+    - 能否输入触发？是否导致crash？
+    - 对于导致至少一个no的bug，发现其挑战
+    - 对于各种分类，阅读回答和issues来查找用户策略
+ - **结果**：
+   - RQ1：**把root cause和symptom列成表格**
+     - root cause：不正确的模型参数和结构、没有对齐的张量、API变化、API误用、结构低效、其他
+     - symptom：错误、效果差、低效率、未知
+   - RQ2：
+     - 46.9%会导致crash
+     - 挑战：概率上正确，偶然正确，随机执行（*非常相似啊*）
+   - RQ3：
+     - 对于症状为error的：trace dependency distance。量化的方式
+     - 对于其他bug
+- **感想**：
+  - 要体现出emperical study的特色，不仅从分类维度，还可以从分类的类别入手。比如这里的root cause虽然其他bug 的emperical study都有，但是这里的root cause是别处没有的。
+  - 相似的东西也可以硬拆成两个，只要你想好怎么去表述两者的不同，而且两者都有足够的文字去叙述。
+  - 分类的部分至少还有数据，challenge几乎就是随便自己写了。但是这占了2个RQ。
