@@ -159,9 +159,6 @@ tag:
 - 实验中，用“选择性”来展现他们工具的能力：工具计算的安全操作数/动态检查的数量。
 
 
-#### [The Python/C API: Evolution, Usage Statistics, and Bug Patterns](https://ieeexplore.ieee.org/document/9054835)
-- SANER 20, Mingzhe Hu(USTC), Yu Zhang(USTC)
-- 利用工具从7个项目中提取Python/C API的使用和演变；手动总结了10个bug pattern。
 
 
 #### [Bilingual Problems: Studying the Security Risks Incurred by Native Extensions in Scripting Languages](https://www.semanticscholar.org/paper/Bilingual-Problems%3A-Studying-the-Security-Risks-by-Staicu-Rahaman/681c9dac27366e20aa84fdb4992177dcf2aba9a2)
@@ -1083,6 +1080,57 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 
 
 #### 实证研究
+
+#### Are Multi-language Design Smells Fault-prone? An Empirical Study
+- TOSEM 21
+- **主题**：
+  - 多语言开发的设计气味（反面模式、代码气味
+- **贡献**：
+  - 提出方法来检测JNI系统的code smell
+
+#### On the Vulnerability Proneness of Multilingual Code
+- FSE 22 
+- **主题**：多语言安全弱点的相关因素：语言选择、语言接口机制
+- **RQ**：
+  - 脆弱性与语言选择
+  - 语言选择的什么因素导致更高的脆弱性
+  - 脆弱性导致了实际的弱点吗？
+- **方法**：
+  - 项目选择：
+    - 1000+ star，6个月内有更新，维护时间超过3年、没有改变语言
+    - 查询语言使用，<1%的被排除掉
+    - 选取时间跨度为3年的commit
+    - 4001个项目
+  - 弱点分类：
+    - MITRE and the SANS Institute（**权威机构的分类**）：3类，prorous defenses，risky resource management，insecure interaction
+    - 对25个top dangerous CWE不同分类**做词频分析**，得到关键词列表。
+    - 用**fuzzywuzzy**做关键词匹配。直接关键词匹配会导致很多FN，用wildcard太多会导致太多FP。
+    - vulnerability-fixing commit：在任意分类得分>90。
+    - 141K个commits，36%，48%，16%
+    - 采样500个commit，**人工验证**：读log、看代码
+  - 语言机制分类：
+    - 分类的来源：人工看代码总结的
+    - 分类：
+      - FFI：显式函数调用
+      - 隐式调用：隐式地通过IPC
+      - 具体化：相互独立，之间没有调用，但是可以相互丰富
+      - 隐式交互：没有交互，通过外部的数据共享，比如文件，来协作
+    - 实现分类：分析工具
+  - 统计方法：
+    - 朴素贝叶斯回归模型，应对数据超扩散
+- **结果**：
+  - 
+- **结论**：
+  - 
+#### [The Python/C API: Evolution, Usage Statistics, and Bug Patterns](https://ieeexplore.ieee.org/document/9054835)
+- SANER 20, Mingzhe Hu(USTC), Yu Zhang(USTC)
+- **主题**：Python/C API和bug模式
+- **方法**：
+  - 提取官方的Python/C API：宏定义和函数声明 
+- **感想**：
+  - 文章短了很多，bug模式的总结有太多的主观性，没有维度的切分
+  - bug怎么总结的？和前面的API演变和使用数据毫无关系。
+  - 这篇文章毫无借鉴意义，很有可能只是学生竞赛投出来的。
 
 ## 研究组
 

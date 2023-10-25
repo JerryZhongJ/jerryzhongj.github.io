@@ -140,6 +140,7 @@ tag:
   - 怎么一篇论文这么多内容？既有实证分析，还有方法？
 
 #### An Empirical Study on TensorFlow Program Bugs
+- ISSTA 2018
 - **对象**：
   -  基于Tensorflow的应用的bug
 -  **RQ**：
@@ -180,3 +181,47 @@ tag:
   - 要体现出emperical study的特色，不仅从分类维度，还可以从分类的类别入手。比如这里的root cause虽然其他bug 的emperical study都有，但是这里的root cause是别处没有的。
   - 相似的东西也可以硬拆成两个，只要你想好怎么去表述两者的不同，而且两者都有足够的文字去叙述。
   - 分类的部分至少还有数据，challenge几乎就是随便自己写了。但是这占了2个RQ。
+
+#### A Comprehensive Study of Real-World Numerical Bug Characteristics
+- ASE 2017
+- **主题**：
+  - 数值计算软件的bug
+- **RQ**：
+  - 数值bug的频率
+  - 根据原因和模式的分类，不同分类的频率
+  - 其他特征
+- **方法**：
+  - 收集数值计算库
+    - 直接选择代表性的库（5个）
+    - 关键字搜索Github C++库，根据stars排序，只选择了1个
+  - 收集bug
+    - 排除掉无关的label、open issues、没有patch的issue、没有相关label的issue
+    - 用关键字
+    - 随机挑选
+    - 人工审查出numerical bug
+- **结果**
+  - 人工审查了828个issue
+  - 给出了不同库的采样的bug数，比较不平衡，bug数量差距最高差一倍
+  - 其中269个是numerical bug
+ 
+  - 直接给出分类，不是根据RQ来书写：
+    - 分类：准确性、特殊值、收敛、正确性
+    - 准确性：不够精确的数据类型、不准确的算数表达式、
+    - 特殊值：缺少Nan检查、溢出、
+    - 收敛：错误的近似公式、无限循环、 。。。
+    - 正确性：。。。
+  - 检测和修复自动化：
+    - 准确性：
+    - 特殊值：测试Nan
+  - 症状：
+    - 错误结果、crashes、性能不好 
+  - finding：
+    - finding 1：32%的bug是numerical bug（**可以用来体现调研问题的重要性**）
+    - finding 2-6：把结果总结了一下， 比例、检测和修复方式
+- **结论**：
+  - 数值bug的频率：很高，值得关注
+  - 当前工具使用：没有，需要关注
+  - 检测修复bug模式：存在，可以推广
+  - 测试和输入生成：开发者常常用对拍的方式来发现结果不正确，提示可以用差分测试
+  - 程序分析：可以用来发现numerical bug（**有点废话**）
+  - 自动bug修复：有点挑战。
