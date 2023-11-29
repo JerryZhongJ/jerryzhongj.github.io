@@ -942,6 +942,52 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - 类型系统
   - ![](./2023-08-30-21-13-05.png)
   - 就是把对方的类型加入到自己的类型系统中。
+
+
+#### CGORewritter: A better way to use C library in Go
+- SANER 23
+- **问题**：利用CGO开发胶水代码是易错的。
+- **贡献**：
+  - CGORewriter：接收一个描述，基于程序分析和规则
+- **背景**：
+  - CGO是Go和C之间的FFI机制，以C为guest language。
+  - Go/C胶水代码生成的半自动化工具：SWIG、GoCxx
+    - 需要手动管理内存
+    - 依赖一个模板
+- **实验**：
+  - 重写`go/crypto`的包（4个）
+  - 指标：运行速度提升（？）
+
+#### Cross-Language Code Search using Static and Dynamic Analyses
+- **问题**：
+  - code2code search：用一段代码去搜索仓库中相似的代码
+    - 代码迁移、代码克隆识别、程序修复
+
+#### Dynamic Generation of Python Bindings for HPC Kernels
+- ASE 21, Steven Zhu, Nader Al Awar, Mattan Erez, and Milos Gligoric 
+- **问题**： 
+- **背景**：
+  - HPC：高性能计算
+  - HPK：高性能核，计算程序，如线性求解器
+  - HPK提供计算，框架将运算迁移到不同硬件平台
+  - 迁移到动态语言的两种方式：重写或者写binding。 
+  - Python/C binding 生成：cppyy、pyximport
+- **贡献**：
+  - WAYOUT：自动生成binding code
+  - 给定头文件，WAYOUT生成：
+    - Python端的wrapper类和wrapper函数
+    - **运行时实例化**的C模板，在Python wrapper函数调用时，动态生成binding代码，翻译数据类型
+  - 特点：将binding生成推迟到运行时，当给定需要的数据类型时。
+  - **因为C++有函数重载而Python没有**，为了保持API一致，就需要用一个Python函数去调用不同的C++函数，就需要根据运行时的参数数量来动态选择binding的目标。
+  - 尤其是遇到**C++模板**，不可能把所有可能性都枚举一遍，因此需要动态生成binding。
+- 方法：
+  - 用Clang分析头文件，提取API，生成镜像的Python wrapper代码 。
+  - 动态生成：
+    - wrapper函数里面包含一句`generate_function_binding`，然后尝试导入so，假如没有就利用C++ template实例化源代码再编译一个。
+- **实验**：
+  - 给Kokkos Kernels（39个kernels ）、Thrusts生成binding
+  - 重写了7个applications（因为生成的API和原来不一样。）
+  - RQ: effectiveless、run-time overhead、 performance between handwritten binding、time to generate。
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO

@@ -225,3 +225,35 @@ tag:
   - 测试和输入生成：开发者常常用对拍的方式来发现结果不正确，提示可以用差分测试
   - 程序分析：可以用来发现numerical bug（**有点废话**）
   - 自动bug修复：有点挑战。
+
+#### How do Developers Fix Cross-project Correlated Bugs?
+- ICSE 17
+- **主题**：跨项目bug
+-  **RQ**：
+   - 发现跨项目bug的root cause要多长时间
+   - 有什么因素影响发现root cause
+   - 上下游如何协作处理跨项目bug
+- **方法**：
+  - 选取生态系统和项目：
+    - 直接选取Python
+    - 直接选取7个项目
+  - 识别跨项目bug
+    - **给出定义**：
+      - 相互依赖的项目有一对issues
+      - 至少一个是bug
+      - 一个issue引用另一个
+      - 一个issue是另一个的root cause
+    - 收集关闭的bug（**？**）
+    - 从bug找到相关issue
+    - 人工审查issue：
+  - 分析bug
+    - 人工分析bug
+    - 采访开发者
+    - 解决bug时间：从下流提出issue到相互mention的时间
+- **结果**：
+  - 542对issues
+  - 271对是跨项目相关bug，涉及204个项目
+  - RQ1：
+    - 
+  
+  
