@@ -988,6 +988,11 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
   - 给Kokkos Kernels（39个kernels ）、Thrusts生成binding
   - 重写了7个applications（因为生成的API和原来不一样。）
   - RQ: effectiveless、run-time overhead、 performance between handwritten binding、time to generate。
+
+
+#### Static Type Inference for Foreign Functions of Python
+- ISSRE 21，Mingzhe Hu, Yu Zhang, Wenchao Huang, Yan Xiong 
+- 
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
