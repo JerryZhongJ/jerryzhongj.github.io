@@ -37,6 +37,15 @@ tag:
 [Python/C](#a-multilanguage-static-analysis-of-python-programs-with-native-c-extensions)
 > 多语言编程使得开发者可以复用其他语言写的库。
 
+#### 我的定义：
+共享同一个内存空间的程序用两种语言编写，并且两种语言编写的两个部分之间发生数据交换。
+
+发生数据交换是分析的前提，没有数据交互的程序就是两个独立的程序，那么他们没有“跨”的成分，也没有研究的必要。
+
+
+而共享同一个内存空间是对“跨语言”的细化。用两个语言编写的程序可以有多种交互方式，最简单的比如说多进程，主语言运行一个用另外一种语言编写的程序，两者通过输入输出交互、或着进程间通信。同理，服务器和网页代码通过网络通信，两种也是不同语言编写的。但是这种数据交换并不是底层的数据交换，一个程序对待另一个程序的数据就和其他任何外部的数据一样，并不涉及程序的语义。
+
+
 ### 跨语言分析（Cross-language Analysis）
 [broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
 > 大多数静态分析针对一种语言，并且忽略了对外部函数的调用，因此产生不完整、不可靠的分析结果。WALA能够分析多种语言，但是不能分析由两种语言共同写成的程序。一些工作利用WALA能够分析用Java和JavaScript写的Android hybrid app。
@@ -508,9 +517,9 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - ASE 16, Sungho Lee, Sukyoung Ryu (KAIST), Julian Dolby (IBM Research)
 - **问题**：安卓混合app是javascript和java相结合 
 - **贡献**：
-  - HybridDroid：指针分析，构建调用图
-  - 总结了混合app的互操作语义
-  - 客户端：bug检测、污点分析 
+  - HybridDroid：给定apk文件，构建调用图
+  - 提出混合app的互操作语义
+  - 工具：bug检测、污点分析 
 - 互操作：
   - 安卓用`WebView`组件来加载网页，并且异步运行其中的JavaScript代码。`WebView`可以设置client，其中包含callback，在JavaScript触发某些事件时被调用。
   - `WebView`执行JavaScript：`loadUrl`、`evaluateJavascript`
@@ -528,15 +537,14 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
   - 动态载入代码
   - 分析敏感度
   - 不同安卓版本：安卓17之后需要加上`JavascriptInterface`标注才能被调用。
-- **方法**：
-  - 提取`loadUrl`方法的字符串参数
-  - 提取元信息
-  - 处理桥交流，构建调用图
-- 检测bug：
+- **方法**：![](2023-12-11-22-41-15.png)
+  - 基于WALA的JavaScript和Java分析模块
+- bug：
   - 找不到Java方法
   - Java方法未调用
   - 方法类型重载：不允许以参数类型重载方法
   - 不兼容类型
+- 污点分析：
 - **实现**
   - WALA
 - **实验**：
@@ -992,7 +1000,70 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 
 #### Static Type Inference for Foreign Functions of Python
 - ISSRE 21，Mingzhe Hu, Yu Zhang, Wenchao Huang, Yan Xiong 
-- 
+- **贡献**：
+  - **基于规则**的对Python外部函数的静态类型推导
+  - 规则分为：外部函数声明（由C函数得到一个Python函数）、参数转换、返回值转换 
+- **方法**：
+  - ![](2023-12-07-17-08-02.png) 
+  - 找到C的interface层中的转换函数 
+  - 类型：![](2023-12-07-17-18-43.png)
+    - 都是基础数据类型，pObject没有属性
+    - list、dict、tuple统一为pProduct
+    - Python/C API支持细粒度的转换（限定取值），因此在int基础上引入nonint
+- **实验**
+  - 指标：
+    - completeness：能够推测的foreign function占比（*这不扯淡吗*）
+    - effectiveness：含义是sound，人工检查Pillow项目（132个FF）
+    - mismatch bug：
+
+
+
+
+#### Practical Static Analysis of JavaScript Applications in the Presence of Frameworks and Libraries
+- FSE 13， Magnus Madsen，Benjamin Livshits，Michael Fanning
+- **背景**：
+  - JavaScript运行在复杂环境中，如HTML DOM、jQuery、node.js、Windows 8，这些部分难以分析。
+  - 标准做法是重新实现：stub
+  - 在给HTML DOM`querySelector`有两种建模：返回`HTMLElement.prototype`和返回网页上的任何元素。
+- **贡献**：
+  - 根据API返回结果的**使用分析**来对API建模，比如返回对象必须有`getContext`、`width`、`height`三个属性。
+  - 本文要解决的其实不是建模问题，而是在缺少libary code或者stub不完善的情况下，对JavaScript进行分析。
+- **方法**：  
+  - 部分推导：在有stub的情况下推导，用来连接JavaScript和library code
+    - 对library code的堆也用allocation site抽象
+  - 全推导：不需要有stub，基于使用来推导
+    - 缺少library code的堆，用symbolic location来对这一部分建模。
+  - 迭代：用部分推导，发现没有返回值的库、没有被回调的参数、缺少的域，建立symbolic location，然后再推导。
+  - unification：把symbolic location和allocation site匹配起来
+    - 共享一种属性
+    - 共享全部属性
+    - 和prototype匹配
+
+#### Building Call Graphs for Embedded Client-Side Code in Dynamic Web Applications
+- FSE 14, Hung Viet Nguyen, Christian Kästner, Tien N. Nguyen
+- **背景**：
+  - 动态网页应用：有服务器端生成客户端应用，前者用PHP、后者是HTML/JS。
+- **贡献**：
+  - 对sever code分析，构造出client code的调用图。
+  - 使用到符号分析、可变parsing、调用图分析
+
+
+#### Adlib: Analyzer for Mobile Ad Platform Libraries
+- ISSTA 19, Sungho Lee, Sukyoung Ryu
+- **背景**：
+  - AdSDK：提供广告的一类SDK。JavaScript做UI，native code访问设备资源。其中AdSDK是native code编写的，AdLibrary是JavaScript包装。
+  - 上层代码是广告商，是未知来源，因此
+- **贡献**：
+  -  静态分析AdSDK：分析其从入口开始的数据流，假如数据流满足一定模式，就认为是漏洞。
+  -  只针对AdSDK API分析。
+  -  报告安全漏洞
+-  **方法**：
+   - 不是基于src/sink，而是定义7种漏洞行为，也就是API调用序列。总结出7种API调用序列的模式来检测。
+- 上一篇论文：[HybriDroid](#hybridroid-static-analysis-framework-for-android-hybrid-applications)
+- **实验**：
+  - 分析24个AdSDK，
+  - 指标：FP、FN
+
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
@@ -1002,10 +1073,11 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - 动态分析给C建模。运行C函数，捕获traces，通过traces来建模。
 
 ####  [Automatic Modeling of Opaque Codefor JavaScript Static Analysis](https://dl.acm.org/doi/10.1145/2025113.2025125)
-- FASE 19, Joonyoung Park（Oracle\KAIST）、Sukyoung Ryu（KAIST）
+- FASE 19, Joonyoung Park、Sukyoung Ryu
+- **贡献**：  
+  - 动静态结合技术：当静态分析遇到不可用代码，先具体化抽象值（采样），运行程序，得到返回值并抽象它。其中采样用组合测试的方法。
 - 动态分析C函数。通过组合测试的方法。对于js端的数据流分析，对于调用C端函数的程序点，对参数的抽象值采样具体取值。然后调用C端函数跑一遍，对返回值再抽象回去。
-- 不保证soundness；基本类型采样可理解，怎么对对象采样没搞懂；采样没有什么高明的方法，依靠启发式。 
-
+- 上一篇：Analysis of JavaScript web applications using SAFE 2.0
 
 #### [PolyCruise: A Cross-Language Dynamic Information Flow Analysis](https://www.semanticscholar.org/paper/PolyCruise%3A-A-Cross-Language-Dynamic-Information-Li-Ming/4511acdf1e7cf798fad081b691b7c9b7b3bc4186)
 - USS 2022, Wen Li, Haipeng Cai(Washington State U~), Jiang Ming(U~ of Texas at Arlington), Xiapu Luo(The Hong Kong Polytechnic U~)
@@ -1130,7 +1202,8 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - IST 17, Shin Hong (Handong Global U~), Taehoon Kwak, Yiru Jeon, Yunho Kim, Moonzoo Kim (Korea Institute of Science and Technology), Byeongcheol Lee, Bongseok Ko (Gwangju Institute of Science and Technology)
 
 
-#### 实证研究
+
+### 实证研究
 
 #### Are Multi-language Design Smells Fault-prone? An Empirical Study
 - TOSEM 21
@@ -1169,10 +1242,10 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
     - 实现分类：分析工具
   - 统计方法：
     - 朴素贝叶斯回归模型，应对数据超扩散
-- **结果**：
-  - 
-- **结论**：
-  - 
+
+
+
+
 #### [The Python/C API: Evolution, Usage Statistics, and Bug Patterns](https://ieeexplore.ieee.org/document/9054835)
 - SANER 20, Mingzhe Hu(USTC), Yu Zhang(USTC)
 - **主题**：Python/C API和bug模式
@@ -1183,18 +1256,128 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
   - bug怎么总结的？和前面的API演变和使用数据毫无关系。
   - 这篇文章毫无借鉴意义，很有可能只是学生竞赛投出来的。
 
+
+
+
+#### Going Native: Using a Large-Scale Analysis of Android Apps to Create a Practical Native-Code Sandboxing Policy
+- NDSS 16, Vitor Afonso, Antonio Bianchiy, Yanick Fratantonioy, Adam Doup´ez, Mario Polinox, Paulo de Geus, Christopher Kruegely, and Giovanni Vigna
+- **背景**：
+  - native code sandboxing：
+    - NativeGuard、Robusta：出于安全考虑，把native code放到另一个进程中运行。可以避免native code篡改Dalvik runtime，也可以施加单独的安全策略
+    - 线程级：Wedge，需要对kernel进行魔改
+  - 
+-**问题**：
+  - real world的native code做什么？干的事和Java code一样？
+  - native code和Java code的紧密性如何？是否通过side channel交流？
+- 目标：生成一个合适的sandbox policy
+- **方法**：
+  - 用静态分析找到涉及native code的app
+  - 用动态分析来分析app
+- **结果**：
+
+
+
+### 安全
+#### NativeGuard: Protecting Android Applications from Third-Party Native Libraries
+- WiSec 14，Mengtao Sun, Gang Tan
+- **贡献**：
+  - 使用Android 进程隔离来对native code沙盒。
+  - 将原来的一个应用分成两个应用，native code所在的应用不再拥有权限。 
+  - 本文主张应该细粒度地分配权限，比如native code和java code。而native code不一定需要整个应用的权限。
+  - 同时native code会访问到整个应用的地址空间，破坏Java的安全模型。
+- **Native Code权限**：
+  - 本文主张Native Code**不会也不应该**请求权限
+    - Native Code应该做计算密集型任务，访问系统资源的事情应该交给Java侧
+    - Native code不应该直接访问API，应该以Java code作为中间介质
+- **实验**：
+  - 功能：写一个testing native library，不经过Java 直接访问API。
+  - real world app：28个。人工检查能跑。
+  - 性能：用MiBench（嵌入式系统的benchmark），取其中消费者设备的benchmark迁移到安卓进行测试。 
+
+
+
+
+
+
 ## 研究组
 
 ### [Gang Tan]()
 
 ### [HaiPeng Cai]()
 
-### [Sukyoung Ryu(KAIST)]()
+### Sukyoung Ryu, Sungho Lee
 
+- [ASE' 16](#hybridroid-static-analysis-framework-for-android-hybrid-applications)
+- [ICSE' 19](#towards-understanding-and-reasoning-about-android-interoperations)
+- [ISSTA' 19](#adlib-analyzer-for-mobile-ad-platform-libraries)
+- [ISSTA' 19](#static-analysis-of-jni-programs-via-binary-decompilation)
+- [ASE' 20](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)
+- [ICSE' 21]()
+- [TSE' 23](#static-analysis-of-jni-programs-via-binary-decompilation)
 ### [Tien N. Nguyen]()
 
 ### [Li Yi]()
-## 资源
+
+
+### 分类和脉络
+
+#### 跨语言场景
+
+不同场景下所要应对的语言特性不同、挑战也不同。
+##### Android Hybrid Application：JavaScript/Java
+ 
+参考[hybriddroid](#hybridroid-static-analysis-framework-for-android-hybrid-applications)
+
+##### traditional Android App(JNI, ADK)：Java/C
+##### Numpy，Scipy：Python/C: 
+##### Node.js JavaScript/C++
+
+#### 目标：
+
+##### 安全、隐私保护
+
+NativeGuard要解决的跨语言接口是JNI，native code是C/C++，而应用代码用的是Android。用沙盒的方式，把native code和应用代码放到不同进程中，避免直接的内存交流。而且认为native code的主要工作是计算，不允许获得过多的系统权限，不允许访问API。应该将系统相关的工作移动至应用。
+
+Adlib的跨语言场景是混合应用。AdSDK，native code是Java，而 
+
+
+##### 缺陷检测
+
+#### 分析方法
+
+##### 单语言分析
+和传统静态分析一样，但是充分考虑跨语言场景的特点，针对性地修改和设计分析方法来针对性解决跨语言场景下的问题。
+
+###### 分析客语言：
+这种分析着眼于一个个API，声称在调用一个API的过程中应该满足一些性质，比如引用计数不变、操作序列满足规约等。这种分析往往从一个API作为入口，去考察它之后的执行流和可达的一系列函数和方法。
+
+[Siliang Li](#jet-exception-checking-in-the-java-native-interface)
+
+
+###### 分析主语言：
+这种分析往往是为了解决传统静态分析中如何处理环境的问题，也就是如何处理源代码不可用的问题。这种问题的一个情况就是，源代码是用其他语言编写而无法分析。他们的方法并不会强调解决的问题是跨语言问题，也并没有把限制在“不同语言”上，然而也有助于我们在跨语言的场景下分析程序。
+
+最常用的方式就是对库API建模，或者叫桩（stub）。根据规约文档[^1]或者动态分析的运行时信息（[mimic](#mimic-computing-models-for-opaque-code)，[automatic model](#automatic-modeling-of-opaque-codefor-javascript-static-analysis)）。
+
+[^1]: Zhai, J., Huang, J., Ma, S., Zhang, X., Tan, L., Zhao, J., Qin, F.: Automatic model generation from documentation for Java API functions. In: 2016 IEEE/ACM 38th International Conference on Software Engineering (ICSE), pp. 380–391. IEEE (2016)
+
+[Magnus Madsen](#practical-static-analysis-of-javascript-applications-in-the-presence-of-frameworks-and-libraries)将库代码放到一边，也就是不根据库的源代码来还原和建模，而是从使用的一方分析。通过观察这些库API如何被使用的，从而推导关于API的性质。总的来说，他们的方法不关心API实际上怎么实现，只关心对这些API的使用是自洽的。
+
+优点：
+- 简单方便，直接使用相对成熟的静态分析技术
+- 没有额外开销
+
+缺点：
+- 建模失真很大，只是
+- 
+
+
+##### 双语言分析
+
+同时分析主语言和客语言
+###### 统一表示
+###### 统一建模
+###### 分治
 
 
 ### 工具
@@ -1217,3 +1400,4 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - polyglot
 - polylingual
 - binding
+
