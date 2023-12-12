@@ -5,70 +5,9 @@ category:
 tag: 
   - 程序分析
 ---
-::: tip 看论文要关注
-1. **问题**:
-   1. 不要只看作者描述的问题，往往包装得天花乱坠，要看他落地解决了哪些。
-   2. 定位：同样是静态分析，有些是面向开发者的（针对源码分析），有一些是第三方、软件平台（无法获取源代码、针对二进制分析）
-2. **假设**。看似结果很好，但是有很多前提条件。要发现文章隐含的假设就更难了。
-3. **贡献**。一两句话的概括。
-4. **方法/创新点**：
-   1. 有些文章形式化写得很牛逼，一实现就很简单。此时的贡献就是形式化本身，而不是方法了。
-   2. 要专注idea如何体现在效果上（评估、指标、落地解决了什么问题）。有用的idea才是好idea。有些文章最后实现的成品和方法是脱节的，看不出方法有什么用。
-   3. motivation examples要仔细看。针对具体场景的方法都不是系统的，而是面向case的。看了case才知道为什么这么设计方法。
-5. **实验**：无论方法如何炫酷，实验效果才是硬道理！复杂的方法未必能用，简单的方法反而能work。
-   1. RQ、实验方法、数据集、指标
-   2. 结果：一两句话描述。
-:::
-
-## 名词定义：一些摘抄
-### 跨语言/多语言（Cross-Language/Multilingaul）
-[broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
-> 多语言程序可以被分为**主语言**（host language）和**客语言**（guest language），主语言是提供FFI的一方，如JNI中的Java。两个通过外部函数接口（foreign function interface）交互，实现一个语言可以调用另外一个语言的函数并且交换数据。Python、Rust、Julia提供了语言级别的FFIs，Java和JavaScript提供了特定运行时环境的FFIs，如JNI和Node.js C++ addons。多语言程序可以利用不同语言的特性，对于开发者而言，利用多语言可以超过只用一种语言的表达能力。常见的是结合高阶语言和低阶语言。
-
-[JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)
-> 安卓允许开发者使用**native语言**来实现程序的一部分
-> 
-> **native code**
-
-[Vulnerability Proneness](#on-the-vulnerability-proneness-of-multilingual-code)
-> 研究表明**用多种语言来写软件**是主导的。
->
-
-[Python/C](#a-multilanguage-static-analysis-of-python-programs-with-native-c-extensions)
-> 多语言编程使得开发者可以复用其他语言写的库。
-
-#### 我的定义：
-共享同一个内存空间的程序用两种语言编写，并且两种语言编写的两个部分之间发生数据交换。
-
-发生数据交换是分析的前提，没有数据交互的程序就是两个独立的程序，那么他们没有“跨”的成分，也没有研究的必要。
-
-
-而共享同一个内存空间是对“跨语言”的细化。用两个语言编写的程序可以有多种交互方式，最简单的比如说多进程，主语言运行一个用另外一种语言编写的程序，两者通过输入输出交互、或着进程间通信。同理，服务器和网页代码通过网络通信，两种也是不同语言编写的。但是这种数据交换并不是底层的数据交换，一个程序对待另一个程序的数据就和其他任何外部的数据一样，并不涉及程序的语义。
-
-
-### 跨语言分析（Cross-language Analysis）
-[broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
-> 大多数静态分析针对一种语言，并且忽略了对外部函数的调用，因此产生不完整、不可靠的分析结果。WALA能够分析多种语言，但是不能分析由两种语言共同写成的程序。一些工作利用WALA能够分析用Java和JavaScript写的Android hybrid app。
-
-[JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)
-> 当**遇到native方法调用**，现有的数据流分析要么用保守的模型，要么忽略了native调用带来的副作用。
-> 
-> 设计一个可以**穿越语言边界跟踪数据流**的数据流分析是当务之急。
-
-### 语言边界（Language Boundary）
-[broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
-> 显式的语言边界：调用外部函数和调用本语言的函数有语法上的不同，如JNI中Java中声明外部函数会使用关键字`native`。Go把所有的C函数放到`C`模块里面。等等。
-> 
-> 隐式边界：把语言边界隐藏起来。如Python，调用C写成的模块与其他模块没有区别。
-
-[Python/C](#a-multilanguage-static-analysis-of-python-programs-with-native-c-extensions)
-> 主语言可以通过接口调用客语言，这个接口被称之为**语言边界**。
 
 
 ## 论文
-:::warning TODO
-补全所有论文的评估部分，尽量揭示其方法和评估之间的关联。
-:::
 
 ### 静态
 #### [Broadening horizons of multilingual static analysis: semantic summary extraction from C code for JNI program analysis](https://doi.org/10.1145/3324884.3416558)
@@ -1039,6 +978,7 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
     - 共享全部属性
     - 和prototype匹配
 
+
 #### Building Call Graphs for Embedded Client-Side Code in Dynamic Web Applications
 - FSE 14, Hung Viet Nguyen, Christian Kästner, Tien N. Nguyen
 - **背景**：
@@ -1064,6 +1004,34 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
   - 分析24个AdSDK，
   - 指标：FP、FN
 
+
+#### Declarative static analysis for multilingual programsusing CodeQL
+- **背景**：
+  - 声明式程序分析：创造初始facts -> 通过规则推导facts -> 以query的方式 提取信息
+  - CodeQL: Github的声明式代码分析工具
+  - 通过修改fact的schema和翻译前端可以让静态分析器分析多种语言，但不能同时分析
+- **贡献**：
+  - MultiQL：复用不同语言的声明式分析器来对多语言程序分析
+  - 针对两种跨语言Java/C、Python/C
+  - 工具：检测bug
+- 检测bug：
+  - Java/C：C解引用Java的空指针、C调用Java没有的的方法、Java native method不匹配C函数类型、C用错误的方法签名调用Java方法
+  - Python/C: 无法准确定义bug，于是定义了inter-use：Python值传递给了“危险”的C函数或者数组下标。
+- **方法**：
+  - 把两种语言的fact和rule统一起来:
+    - 假如A调用B是直接调用的，那么`CallEdge_{AB} := CallAt_A(func_name, ...), ProcedureAt_B(func_name)`
+    - 假如B调用A是通过API`CallMethod`，那么`CallEdge_{BA} := CallAt_B("CallMethod"), Argument_B(0, func_name), ProcedureAt_A(func_name)`。类似如此完成语言边界的解析
+  - 统一CodeQL不同语言的库：上述的实现是通过修改CodeQL的库来完成
+
+
+#### JUSTGen: Effective Test Generation for Unspecified JNI Behaviors on JVMs
+- ICSE 21, Sungjae Hwang, Sungho Lee, Jihoon Kim, Sukyoung Ryu
+- **背景**：
+  - `-Xcheck:jni`：动态检查传给JNI函数的参数。但没说怎么检查
+  - JNI不会动态检查的原因：影响性能、缺少足够的动态信息去检查
+- **贡献**：
+  - 研究了`-Xcheck:jni`的语义和影响。 
+  - 用设计的DSL来重写JNI规约，用SMT求解JNI规约，发现未定义的角落 
 ### 动态
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
 :::warning TODO
@@ -1202,7 +1170,6 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - IST 17, Shin Hong (Handong Global U~), Taehoon Kwak, Yiru Jeon, Yunho Kim, Moonzoo Kim (Korea Institute of Science and Technology), Byeongcheol Lee, Bongseok Ko (Gwangju Institute of Science and Technology)
 
 
-
 ### 实证研究
 
 #### Are Multi-language Design Smells Fault-prone? An Empirical Study
@@ -1312,14 +1279,64 @@ Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ o
 - [ISSTA' 19](#adlib-analyzer-for-mobile-ad-platform-libraries)
 - [ISSTA' 19](#static-analysis-of-jni-programs-via-binary-decompilation)
 - [ASE' 20](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)
-- [ICSE' 21]()
+- [ICSE' 21](#justgen-effective-test-generation-for-unspecified-jni-behaviors-on-jvms)
+- [SPE' 23](#declarative-static-analysis-for-multilingual-programsusing-codeql)
 - [TSE' 23](#static-analysis-of-jni-programs-via-binary-decompilation)
+  
+
 ### [Tien N. Nguyen]()
 
 ### [Li Yi]()
 
+## 总结
 
-### 分类和脉络
+### 定义
+#### 跨语言/多语言
+
+[broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
+> 多语言程序可以被分为**主语言**（host language）和**客语言**（guest language），主语言是提供FFI的一方，如JNI中的Java。两个通过外部函数接口（foreign function interface）交互，实现一个语言可以调用另外一个语言的函数并且交换数据。Python、Rust、Julia提供了语言级别的FFIs，Java和JavaScript提供了特定运行时环境的FFIs，如JNI和Node.js C++ addons。多语言程序可以利用不同语言的特性，对于开发者而言，利用多语言可以超过只用一种语言的表达能力。常见的是结合高阶语言和低阶语言。
+
+[JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)
+> 安卓允许开发者使用**native语言**来实现程序的一部分
+> 
+> **native code**
+
+[Vulnerability Proneness](#on-the-vulnerability-proneness-of-multilingual-code)
+> 研究表明**用多种语言来写软件**是主导的。
+>
+
+[Python/C](#a-multilanguage-static-analysis-of-python-programs-with-native-c-extensions)
+> 多语言编程使得开发者可以复用其他语言写的库。
+
+共享同一个内存空间的程序用多种语言编写，并且两种语言编写的两个部分之间发生数据交换。
+
+发生数据交换是分析的前提，没有数据交互的程序就是两个独立的程序，那么他们没有“跨”的成分，也没有研究的必要。
+
+
+而共享同一个内存空间是对“跨语言”的细化。用两个语言编写的程序可以有多种交互方式，最简单的比如说多进程，主语言运行一个用另外一种语言编写的程序，两者通过输入输出交互、或着进程间通信。同理，服务器和网页代码通过网络通信，两种也是不同语言编写的。但是这种数据交换并不是底层的数据交换，一个程序对待另一个程序的数据就和其他任何外部的数据一样，并不涉及程序的语义。
+
+
+#### 跨语言分析（Cross-language Analysis）
+[broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
+> 大多数静态分析针对一种语言，并且忽略了对外部函数的调用，因此产生不完整、不可靠的分析结果。WALA能够分析多种语言，但是不能分析由两种语言共同写成的程序。一些工作利用WALA能够分析用Java和JavaScript写的Android hybrid app。
+
+[JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)
+> 当**遇到native方法调用**，现有的数据流分析要么用保守的模型，要么忽略了native调用带来的副作用。
+> 
+> 设计一个可以**穿越语言边界跟踪数据流**的数据流分析是当务之急。
+
+#### 语言边界（Language Boundary）
+[broadening horizons](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis):
+> 显式的语言边界：调用外部函数和调用本语言的函数有语法上的不同，如JNI中Java中声明外部函数会使用关键字`native`。Go把所有的C函数放到`C`模块里面。等等。
+> 
+> 隐式边界：把语言边界隐藏起来。如Python，调用C写成的模块与其他模块没有区别。
+
+[Python/C](#a-multilanguage-static-analysis-of-python-programs-with-native-c-extensions)
+> 主语言可以通过接口调用客语言，这个接口被称之为**语言边界**。
+
+
+
+### 分类
 
 #### 跨语言场景
 
@@ -1377,17 +1394,20 @@ Adlib的跨语言场景是混合应用。AdSDK，native code是Java，而
 同时分析主语言和客语言
 ###### 统一表示
 ###### 统一建模
+
+Declarative static analysis for multilingual programsusing CodeQL
+
 ###### 分治
 
 
-### 工具
+## 工具
 
 
 ### 数据集
 
 ----
-### 记录
-#### 关键字
+## 记录
+### 关键字
 - [x] cross language
 - [x] inter-language
 - [x] multi-language
