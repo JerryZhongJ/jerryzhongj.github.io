@@ -13,7 +13,8 @@ tag:
 - ASE 20, Sungho Lee(Chungnam National University), Hyogun Lee(KAIST), Sukyoung Ryu(KAIST)
 - **问题**：针对跨语言的静态分析仍然不足。一些静态分析工具直接忽略外部函数调用，一些工具能分析多种语言但不能同时分析，一些工具能够分析Android hybrid app但仅限于这种情况，不具备可扩展性。
 - **贡献**：
-  - 提出通用的多语言分析方法：对客语言进行模块化分析提取摘要，只保留互操作有关的信息；对主语言（提供FFI的一方，Java）采用全程序分析。主语言分析对客语言的语义无知，只知道FFI语义和客语言的摘要。
+  - 对客语言进行模块化分析提取**摘要**，只保留互操作有关的信息；
+  - 对主语言（提供FFI的一方，Java）采用全程序分析。主语言分析对客语言的语义无知，只知道FFI语义和客语言的摘要。
   - 对类C语言的语义摘要提出形式化抽象语义
   - 实现了JNI分析器
 - **方法**：
@@ -21,7 +22,7 @@ tag:
     - 5中statements：load、store、call、foreign call、return
     - 4中表达式：variable、variable reference、field access（返回地址）、struct creation、constant
     - 3种类型：pointer、struct、primitive。比如Java的对象 `jobject`是primitive type。
-  - 模块化分析客语言：对每个函数提取输入和输出状态之间的关系![](./2023-05-11-112801.png)
+  - 模块化分析客语言：对每个函数提取**输入和输出状态之间的关系**![](./2023-05-11-112801.png)
     - 堆：地址（normal、symbolic） $\rightarrow$(value, constraint)。与其他抽象语义不同，这里没有变量和内存地址的区别，全都统一成地址，因为一个变量也是可以被指向的。
     - value：normal location（变量所在地址）、symbolic location、常量、结构体
     - constraint：在heap map中用来表示两个地址何时指向同一个值，假如指向同一个值就不用两个symbolic location来表示，指向一个symbolic location就好。这样做的好处是，可以流敏感分析。否则我们一开始就把它们看作两个symbolic location看待，……。
@@ -29,7 +30,7 @@ tag:
     - 输出状态包括：final heap X foreign function call log。
     - parameter enviroment：一个参数指向一个symbolic location，假如参数是指针则symbolic location再指向一个symbolic location。
     - initial heap：两两讨论symbolic location是否相同，是就指向同一个。
-    - foreign function call：callsites、返回值的symbolic location、实参变量、heap快照。这里的foreign function根本不是指在Java定义的方法，就是FFI。
+    - foreign function call：callsites、返回值的symbolic location、实参变量、heap快照。这里的foreign function指的是FFI。
   - 生成摘要：参数、语句、返回值
     - 语句：外部调用、分支、$\phi$
     - $\phi$：
@@ -41,10 +42,9 @@ tag:
     - Java分析：FlowDroid，基于Soot的Java/Android静态分析器
 - 两种bugs：
   - 错误调用外部函数：或运行时错误或未定义行为。本文能够检查错误的绑定和错误的C调用Java方法。
-  - 错误处理Java异常：
+  - 错误处理Java异常：出现异常应该及时处理，和[Tan Gang](#jet-exception-checking-in-the-java-native-interface)一样
 
 #### [Towards Understanding and Reasoning About Android Interoperations](https://ieeexplore.ieee.org/document/8811927/)
-
 - ICSE 19, Sora Bae(KAIST), Sungho Lee(KAIST), Sukyoung Ryu(KAIST)
 - **贡献**：
   - 本文通过对安卓应用的测试和阅读源码总结出互操作语义
@@ -59,7 +59,6 @@ tag:
   - SAFE： JavaScript前端
 
 #### [A Multilanguage Static Analysis of Python Programs with Native C Extensions](https://link.springer.com/10.1007/978-3-030-88806-0_16)
-
 - SAS 21, Raphaël Monat, Abdelraouf Ouadjaout, Antoine Miné(Sorbonne Université)
 - 问题：Python代码往往依赖native C代码。目前分析方法用stub来给C代码建模，但是要么耗时要么不准确。Python和C交互可能带来的问题：C没有异常处理；Python和C得数据表示不同，C存在溢出问题但Python对此无知。
 - 贡献：
@@ -118,14 +117,7 @@ tag:
   - 参数翻译，假如参数类型不对，两种native api的处理还不同：或返回error code，或直接忽略；`\0`表示字符串的终结？
   - 缺少返回值，但是又尝试读取返回值会hard crash。
   - 调用C extension是同步的，可能会阻塞Node.js
-  - 内存管理问题：缓冲区溢出，释放后使用、重复释放。
-    :::info Node.js API
-
-1. Node.js addons开发早期用的是Node.js、v8提供的开发头文件。然而由于这两家更新频率很快，使得开发者叫苦不迭。
-2. Native Abstractions for Node.js（NAN），用宏封装了上述头文件。Nan可以用宏自动判断版本，自动展开成相应的接口，使得API独立于Node.js版本。虽然源代码相同，但依然需要针对不同版本的Node.js进行编译，因此所有的二进制代码很多。而且只能用于v8引擎。
-3. Node API（N-API）是Node.js基于C设计的API，用于摆脱对JS引擎的依赖。N-API包含了ABI（因为支持JIT，跨语言调用需要用ABI统一），ABI在大版本中保持稳定，不需要重新编译。node-addons-api在此之上提供C++封装。
-   :::
-
+  - 内存管理问题：缓冲区溢出，释放后使用、重复释放
 - **方法**：
   - 对JavaScript和C分别提取他们的过程内数据流。![](./2023-05-12-141125.png)
   - 连接数据流：找到名字对，C函数名和在JavaScript中的名字。根据下面的语法模式（各种脚本语言extension用来注册API的方法）。![](./e55c9ad3edb329773d43524f2e8a34c9.png)
@@ -138,7 +130,7 @@ tag:
 #### [Finding and Preventing Bugs in JavaScript Bindings](https://ieeexplore.ieee.org/stampPDF/getPDF.jsp?tp=&arnumber=7958598&ref=&tag=1)
 
 - SP 17
-- 问题：一些Javascript的底层和addon是用C++实现的，写的时候需要用binding code来粘合javascript和C++，翻译数据类型、数据表示、传递异常处理等。binding code容易程序员编写，容易写错，导致：crash、跳过类型、边界检查。binding code可以调用javascript代码。使之更容易被劫持。
+- **背景**：一些Javascript的底层和addon是用C++实现的，写的时候需要用binding code来粘合javascript和C++，翻译数据类型、数据表示、传递异常处理等。binding code容易程序员编写，容易写错，导致：crash、跳过类型、边界检查。binding code可以调用javascript代码。使之更容易被劫持。
 - 贡献：
   - 总结了三种安全的违反（bug）：crash-safety、type-safety、memory-safety。
   - 提出检查器来发现上面三种bug，支持多个runtime：nodejs、chrome blink、chrome extension、pdfium。*但应该是面向v8引擎分析*
@@ -164,11 +156,9 @@ tag:
 
 - OOPSLA 07, Gang Tan (Boston College), Greg Morrisett (Harvard U~)
 - **问题**：之前的静态程序分析限定在一个语言中，但是Java中JNI的使用还是很多的。
-- 如何给C做规约（如何描述C代码的行为）
-  - 做标记：不合适
-    - 标记有无副作用、nullable甚至数据流值
-    - 过于ad-hoc，不具备可扩展性。
-  - 本文用霍尔逻辑：描述C代码，捕捉运行前-运行后的关系：返回值与参数、运行前的Java堆-运行后的Java堆，抛弃C的执行步骤和C的堆。
+
+- **贡献**：
+  - 用霍尔逻辑：描述C代码，捕捉运行前-运行后的关系：返回值与参数、运行前的Java堆-运行后的Java堆，抛弃C的执行步骤和C的堆。
 - Extended JVML：模拟C对Java堆的影响，引入不确定性
   - choose $\tau$：返回$\tau$类型的随机值。当$\tau$是类，表示随机一个现有的对象。可用来模拟系统调用结果，和over-approximate。
   - mutate x：修改一个对象为随机的值
@@ -240,16 +230,11 @@ tag:
   - Scheme的上下文分为H和E，H表示没有异常处理的上下文，E表示所有上下文。这使得Scheme无法处理由ML返回的异常（当返回值为0）。
 
 #### [JuCify: a step towards Android code unification for enhanced static analysis](https://dl.acm.org/doi/10.1145/3510003.3512766)
-
-:::warning TODO
-与[semantic extraction](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)对比
-:::
-
 - ICSE 2022
-- **问题**：恶意软件可能在Android的native code里面。当前分析native code的方法是临时的，对bytecode和native code的分开分析，然后再把结果统合在一起 *（JN-SAF？DroidNative？NativeGuard？TaintArt？）*，缺少统一模型。
 - **贡献**：
   - Jucify：生成包含native代码的统一Jimple表示。
   - Jucify直接在**二进制层面**进行分析：bytecode和native binaries。
+  - 构建调用图和发现**数据泄漏**
 - 生成统一的调用图：
   1. 构建native callgraph。用ANGR，二进制分析工具。
   2. 提取双向的调用信息。
@@ -262,30 +247,24 @@ tag:
 - 用Jimple来表示bytecode和native code
   - 用DummyBinaryClass来表示native代码，native函数就是它的方法。
   - bytecode对entry method的调用改成对DummyBinaryClass方法的调用。
-  - native code转Jimple是围绕返回值和exit调用的。抛弃了数据流图，排列组合来枚举exit参数和返回值。在函数签名的参数声明、可以推导的其他变量（exit方法返回值的结果变量，调用exit方法的接收对象等）枚举。保守估计。
-  - 本质上是对native代码建模，但是相当粗糙。
+  - native code转Jimple是启发式的：围绕函数返回值和exit方法。抛弃了数据流图，排列组合来枚举**exit方法的参数**和**返回值**。在函数签名的参数、可以推导的其他变量（exit方法返回值的结果变量，调用exit方法的接收对象等）枚举。保守估计。
+
 
 #### [JN-SAF: Precise and Efficient NDK/JNI-aware Inter-language Static Analysis Framework for Security Vetting of Android Applications with Native Code](https://dl.acm.org/doi/10.1145/3243734.3243835)
-
 - CCS 18, Fengguo Wei, Xinming Ou(U~ of South Florida), Xingwei Lin, Ting Chen, Xiaosong Zhang(U~ of Electronic Science and Technology of China)
-- **问题**：Android的native code有安全隐患，可能泄漏敏感信息或者利用漏洞。缺乏语言间的数据流分析。
 - **贡献**：
-
-  - 基于摘要、自底向上数据流分析
+  - 基于**摘要**、自底向上**数据流分析**
   - 统一的堆操作
   - 给Native Develpment Kit（NDK）、JNI建模，让二进制分析工具能够分析native code。
   - 这里的native code是**二进制层面**的。
   - JN-SAF：跨语言数据流跟踪，能够找到跨语言安全问题。
 - **背景**：
-
   - Native Development Kit（NDK）：android允许开发者使用NDK用C/C++编写组件，运行时直接调用native代码中的生命周期方法。基于JNI。
   - 两种native Activity：
 - **Motivation Examples**
-
   - ![](./2023-07-01-16-04-40.png)
   - native code可能回调java方法
 - **方法**
-
   - 基于摘要自底向上分析![](./2023-07-01-19-08-54.png)
     - 摘要：![](./2023-07-01-16-27-50.png)
     - 摘要描述的是**Java对象**
@@ -301,16 +280,13 @@ tag:
   1. 反编译：把bytecode反编译成Pilar，用angr反编译二进制成VEX
   2. 用Amandroid构建环境模型。Android是基于事件的系统，没有入口。
   3. 基于摘要的数据流分析
-
      1. 构建调用图。调用图是双向的。
      2. 自底向上摘要传播
      3. 用Amandroid做Java数据流分析
      4. 用angr的符号分析的标注功能做C数据流分析
-
-     - 对JNI函数建模，在创建/操作Java对象时修改summary标注
-     - 把所有的Linux系统调用、JNI回调API标注为污点源、汇（哪些是源？）
+     - **对JNI函数建模**，在创建/操作Java对象时修改summary标注
+     - 把所有的Linux**系统调用、JNI回调API标注为污点**源、汇
 - **评估**
-
   - 数据：
     - NativeFlowBench：22个benchmark
     - AndroZoo中100000个app
@@ -318,19 +294,11 @@ tag:
   - 与baseline在NativeFlowBench比较，看能够报告数据泄漏路径
   - 在real world projects讨论了4个case
 
-#### [On the Vulnerability Proneness of Multilingual Code](https://doi.org/10.1145/3540250.3549173)
 
-:::warning TODO
-补全方法
-:::
-
-- ESEC/FSE 22, Wen Li, Haipeng Cai(Washington State U~), Li Li(Monash U~)
-- **概述**：本文是对多语言项目的实证研究，旨在发现多语言的脆弱（proneness to vulnerability）和语言选择的关系。他们发现和语言边界的接口有很大关系。
 
 #### [Cross-language Android permission specification](https://dl.acm.org/doi/10.1145/3540250.3549142)
 
-- ESEC/FSE 22, Chaoran Li, Sheng Wen,
-  Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ of Adelaide), Minhui Xue, Muhammad Ejaz Ahmed, Seyit Camtepe(CSIRO’s Data61)
+- ESEC/FSE 22, Chaoran Li, Sheng Wen, Yang Xiang(Swinburne U~ of Technology), Xiao Chen(Monash U~), Ruoxi Sun(The U~ of Adelaide), Minhui Xue, Muhammad Ejaz Ahmed, Seyit Camtepe(CSIRO’s Data61)
 - **问题**：Android一些敏感API会要求权限，但是官方没有给出这样的清单说什么API会请求什么权限。已经有研究者扫描API框架给出这样的映射，但是对native library（C/C++）却没有。![](./2023-06-30-15-35-08.png)
 - **贡献**：
   - NatiDroid：跨语言**控制流**分析
@@ -348,20 +316,21 @@ tag:
   - 提取映射
 - 实现
   - 基于SOOT和CLANG分析框架
-- **评估**：
+- **实验**：
+- **评价**：
+  - 最终还是在构造调用图，但是找到了一个很实用的应用场景来讲这个故事。
+  - 针对Android的这个场景处理得很细致，讨论了很多实际上跨语言调用的机制
 
 #### [Finding Reference-Counting Errors in Python/C Programs with Affine Analysis](http://link.springer.com/10.1007/978-3-662-44202-9_4)
 
 - ECOOP 2014, Siliang Li, Gang Tan(Lehigh U~)
-- **问题**：Python运行时无法管理native模块对Python对象的引用，native模块需要手动修改引用计数。
+- **背景**：Python运行时无法管理native模块对Python对象的引用，native模块需要手动修改引用计数。
 - **贡献**：
-
   - Pungi：用静态分析来识别Python native C模块中的引用计数错误。
-    - 只分析C代码
+  - **只分析C代码**
   - 对native模块仿射抽象（affine abstraction）得到仿射程序：赋值右手边只能是仿射表达式（$a_0+\sum_{i=1}^na_ix_i$）。
 - 本文不算做跨语言分析，因为它没有处理语言边界问题，但是这是一个在跨语言场景下的程序分析问题。
 - **背景**：
-
   - ![](./2023-07-05-14-52-08.png)
   - 借引用：
     - 获得一个对象的引用但是不增加引用计数。
@@ -370,13 +339,15 @@ tag:
     - 从特定API的返回值借：特定API的行为如此，如 `PyList_GetItem`。在借这种引用，需要保证你活得比别人短。*假如API加了一层封装，它的返回值？*
   - 偷引用：指API的行为，API的借叫做偷，如 `PyList_SetItem`
     - API从caller获得一个对象的引用，但是不增加引用计数；获取失败反而会减少引用计数。
-    - 表现为从caller的变量偷走引用，该变量的引用视为无效。
+    - 表现为从caller的变量偷走引用，该变量的引用理应视为无效。
   - 成功创建对象时，引用计数为1。
 - **方法**：
-
+  - 两个性质：假设函数有一些输入引用
+    - 对象引用计数的改变等于通过指向该对象的输入引用进行的引用计数改变之和
+    - 通过一个引用来改变引用计数时，与是否和其他引用构成别名无关，因此不需要管输入引用的别名关系。
   - 对象的引用逃逸出作用域：被返回、传递给全局变量、传递给堆、被偷走
   - 以object scope为单位分析，而不是所有程序点。
-    - 因为借/偷，不是所有引用都会被计数。粗粒度有利于减少FP。
+    - 因为有借/偷，不是所有引用都会被计数。粗粒度有利于减少FP。
     - 对象分为natively创建的和Python创建的
       - natively创建的对象的scope是创建点所在函数
       - Python创建的对象的scope是入口函数
@@ -384,22 +355,22 @@ tag:
     - *看起来object scope提出的意义就在于区分entry function和创建对象的函数。*
 
   1. 分离接口和库
-  2. 翻译成SSA
-  3. 仿射翻译
-
-  - ![](./2023-07-05-14-50-22.png)
-  - 先假设每个参数分别指向不同对象
-  - 维护变量-对象映射
-  - 变量都是$rc_i, on_i$，$on_i$指示成功创建对象。这是关于reference counter的程序，所以才是仿射的
+  2. 翻译成**SSA**
+  3. 仿射翻译: ![](./2023-07-05-14-50-22.png)
+     - 先假设每个参数分别指向不同对象：1 ... i ... m
+     - 维护变量-对象映射：map(x) = i。
+     - 仿射后的变量都是$rc_i, on_i$。$rc_i$表示对象i的引用计数，$on_i$指示成功创建对象。
+     - 仿射后的表达式都是关于$rc_i$的加加减减
+     - 函数调用利用实参的别名信息，把别名的$rc_i$、$rc_j$相加
 - **实现**
-
   - OCaml
 - **评估**
-
   - 13个real world项目
   - ![](./2023-07-05-16-33-37.png)
   - 人工审查所有errors
-
+- **评价**：
+  - 时间复杂度是线性的，只要自下往上扫一遍就行
+  - 能够实现线性是因为它不需要管Python对象在Python里面的联系，就是base和属性的关系。它这里获取一个Python对象就好像是用API凭空产生一个对象一样，对象的传播也是指针的传递，没有考虑我在这里引用一个对象，是不是在另一处`GetAttr`引用的是同一个对象。
 #### [Exception analysis in the Java Native Interface](https://www.sciencedirect.com/science/article/pii/S0167642314000446)
 
 - SCP 2014, SiliangLi, GangTan
@@ -438,48 +409,7 @@ tag:
   - 污点分析的汇：指针解引用
   - 不安全操作：不在白名单上、污点指针解引用
 
-#### [Collecting Cyclic Garbage across Foreign Function Interfaces: Who Takes the Last Piece of Cake?](https://dl.acm.org/doi/10.1145/3591244)
 
-- PLDI 23
-- **问题**：使用FFI编程可能存在循环垃圾收集问题
-
-  - 存在两套堆、垃圾回收器，无法处理循环垃圾
-  - 跨语言边界的垃圾回收特别漫长
-- **贡献**：Refgraph GC
-
-  - 收集跨越FFI的循环垃圾
-  - 用于Ruby/Java。
-  - 只修改主语言的运行时，且无需更改垃圾回收机制。
-    - 先前有研究采用让两边垃圾回收机制协作的方式
-    - 本文argue说修改库的运行时会降低兼容性、可维护性，因为有一些库是依赖特定版本运行时
-- **背景：一种简单FFI的实现**：
-
-  - 远程引用：引用对方的堆、对象
-  - 代理对象：对象在另一个语言的包装。调用方法时或通过发送消息、或native code扩展。
-  - 导出表：Ruby中被代理的对象会添加到导出表，避免被垃圾回收。导出表相当于根集。当代理对象被JavaScript回收，被代理的对象也会从导出表中删除。
-  - 导入表：保存着对代理对象的**弱引用**，用以周期性地跟踪代理对象的状态。假如代理对象被回收，
-  - 上述FFI是对称的，而且无法回收跨边界的循环引用。
-  - **
-- **方法**：基本上是追踪垃圾回收
-
-  1. 在主语言生成压缩的引用图
-
-  - 有向二分图：包含根集（不含导出表）、导出表中的对象、代理对象；
-  - 边总是从根集、导出表指向代理对象。导出表的出边表示只对外部引用可达。
-  - 3 bits：和对象的数据分开
-    - R：从根集可达？
-    - P：是代理对象？
-    - E：在计算导出表可达时表示是不是被某一对象可达。
-  - 算法：先计算P、R，再对导出表中的对象计算E。
-
-  2. 镜像至外部语言：
-
-  - 主语言中的代理对象 - 外部语言中导出表中的某对象
-  - 主语言导出表的对象 - 外部语言中的代理对象
-  - 对于根集不可达的代理对象，其原对象会在外部语言的导出表中被移除。与原来的区别在于，现在只看根集就移除。
-  - 对于主语言中导出表对象$\rightarrow$代理对象的边，在外部语言中建立代理对象$\rightarrow$导出对象的边。这叫做镜像引用。
-
-  3. 让垃圾回收器回收循环垃圾
 
 #### [HybriDroid: Static Analysis Framework for Android Hybrid Applications](http://dx.doi.org/10.1145/2970276.2970368)
 
@@ -520,12 +450,10 @@ tag:
   - 隐私泄露：上述48 app，发现19个广告平台。展示了1个case。
 - **点评**：看来缺少标注是这篇文章的motivation了。
 
-#### [Static Analysis of JNI Programs via Binary Decompilation]()
+#### Static Analysis of JNI Programs via Binary Decompilation
 
 - TSE 23, Jihee Park, Sungho Lee, Jaemin Hong, Sukyoung Ryu
-- **问题**：
-  - 现有方法不适用于编译后的JNI程序，或者第三方库只有二进制。
-  - 之前的二进制分析方法只停留在语法层面，因此调用图和数据流不精确，无法发现一些类型的安全漏洞。
+- **背景**：
   - [JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)：无法处理多执行路径（？）、全局变量、动态dispatch
 - **挑战**：
   - 反编译产生的C代码不可编译，类型不精确。
@@ -565,8 +493,8 @@ tag:
   - 查找native code，搜索方法签名的字符串
   - 定位字符串的使用位置
     - string x-refs：字符串引用并不一定是常数，可能是运行时确定的（位置无关代码）
-    - 这个分析最终是用来辅助DataLog指针分析的，因此还要模拟回调的实参。
-    - *本文的写法是分析可以增加Java端的入口点，因此回调参数不精确。*
+    - 这个分析最终是用来辅助**DataLog指针分析**的，因此还要模拟回调的实参。
+    - *本文声称是分析可以增加Java端的入口点，因此回调参数不精确。*
 - **实现**：
   - Doop：基于DataLog，Java字节码指针分析
   - Radare2：分析二进制，生成IR，定位字符串
@@ -577,11 +505,6 @@ tag:
     - 安卓app：以动态分析为ground truth，recall 100%。同上。
 
 #### [Combinations of Reusable Abstract Domains for a Multilingual Static Analyzer?]()
-
-:::warning
-补全
-:::
-
 - Matthieu Journault, Antoine Mine, Raphael Monat, and Abdelraouf Ouadjaout (Sorbonne U~)
 - **背景**：
   - 抽象解释：程序语义的近似，可以理解为解释器，但是这种解释器运行在所有的输入和路径，并且忽略语义细节。
@@ -605,36 +528,29 @@ tag:
 
 - TDSC 22, Cong Sun, Yuwan Ma, Dongrui Zeng, Gang Tan, Siqi Ma, and Yafei Wu
 - **问题**：
-
-  - 安卓app中的native code是不安全的，因为它对传统静态分析而言是一个黑盒。现存静态信息流分析只能分析bytecode层面，不能分析native code。
   - 两种缺陷：
     - native和bytecode互为source、sink，相互调用；
     - source、sink都在bytecode，经由native code传播（bytecode调用native，并且native调用bytecode）。
   - [JN-SAF](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)不够精确
 - **贡献**：
-
   - uDep：结合DroidSafe，识别敏感信息流。动静态结合的方法，静态的二进制控制流分析+基于变异识别native code的污染效果
   - 给native code建模方法：基于变异测试得到的输入返回关系；
 - **方法**：
-
   1. 用IDA做二进制静态分析
-
-  - 查找对Java方法的调用，是否是source/sink，鉴定为type 1缺陷。
-
-  1. 从二进制中提取代码，发现JNI函数的调用 `CallXXXMethod`，判断是否是source/sink
-  2. 反向查找使用这些source/sink的native函数
-  3. 判断这些native函数是否在Java端声明，加入到DroidSafe的source/sink列表
-  4. 对于添加进source列表代理方法，假如其native函数返回类型 `T`，则污染代理方法的返回值或输出参数为兼容类型 `T'`
-  5. 基于变异算法分析native方法的输入输出依赖
+     - 查找对Java方法的调用，是否是source/sink，鉴定为type 1缺陷。
+  2. 从二进制中提取代码，发现JNI函数的调用 `CallXXXMethod`，判断是否是source/sink
+  3. 反向查找使用这些source/sink的native函数
+  4. 判断这些native函数是否在Java端声明，加入到DroidSafe的source/sink列表
+  5. 对于添加进source列表代理方法，假如其native函数返回类型 `T`，则污染代理方法的返回值或输出参数为兼容类型 `T'`
+  6. 基于变异算法分析native方法的输入输出依赖
      - 视native代码为黑盒，输入是参数，输出是返回值和对象类型参数
      - 改变输入，观察输出是否变化。使路径尽量覆盖。
-  6. 利用语义和输入输出依赖，生成stub：
+  7. 利用语义和输入输出依赖，生成stub：
      - 基本 -> 基本：直接把输入类型转换成输出（描述两者的污染传播关系）
      - 基本 -> 非基本：用 `addTaint`把输入添加到输出的域 `taint`（*详情要看DroidSafe*）
      - 非基本 -> 基本：把 `getTaint(<input>)`赋值给输出。
      - 非基本 -> 非基本：若类型兼容，直接赋值；否则使用 `getTaint`、`addTaint`。
 - **实验**：
-
   - 数据集：
     - S1（143）：NativeFlowBench、DroidBench
     - S2（5096）：AndroZoo
@@ -748,20 +664,11 @@ tag:
 - **评价**：看岔了，这不算做静态程序分析，算了，看都看了。
 
 #### [DroidNative: Automating and optimizing detection of Android native code malware variants](https://www.sciencedirect.com/science/article/pii/S016740481630164X)
-
- ::: warning
- 补充
- :::
-
 - Computers & Security 17, Shahid Alam (Gebze Technical U~), Zhengyang Qu, Yan Chen(Northwestern U~), Ryan Riley (Qatar U~), Vaibhav Rastogi (U~ of Wisconsin-Madison)
-- **问题**：
-  - 恶意软件几乎集中在安卓
-  - 恶意软件会用代码混淆来应对基于签名的检测（*可能是基于模式吧*）
-  - 对native code的恶意检测很少
 - **贡献**：
   - DroidNative：跨平台（x86、ARM）工作于native code层面，可以检测bytecode和native的恶意软件。native code这里指的是二进制。
-    - 用静态分析，着眼于控制流的模式，控制流不会被代码混淆影响。
-    - 用ART把bytecode编译成native code
+    - 用静态分析，着眼于**控制流的模式**，控制流不会被代码混淆影响。
+    - 用**ART**把bytecode编译成native code
   - 改进恶意分析中间语言（MAIL）
     - 添加ARM
     - 提升准确率和速度
@@ -881,43 +788,37 @@ tag:
 #### [Automatic generation of library bindings using static analysis](https://dl.acm.org/doi/10.1145/1542476.1542516)
 
 - PLDI 09, Tristan Ravitch, Steve Jackson, Eric Aderhold, Ben Liblit (U~ of Wisconsin–Madison)
-- **问题**：
-
+- **背景**：
   - 目前binding code是用手写的
   - 现有的binding生成工具：SWIG、ctypeslib、各项目自己的工具，基于C头文件
   - 基于头文件的方法一般需要标记，是为了利用高层代码的特性（*？*）
 - **贡献**：
-
-  - 论证了自动化生成binding code是必要的
   - 提出了根据无标记库代码生成binding code的策略，基于对库代码实现部分的静态分析。
-  - 面向Python/C
+  - 面向**Python/C**
 - **方法**
-
   1. 预处理：
      - 数组读取改成指针操作
      - 所有函数只有唯一出口
      - SSA形式
      - 做了全局别名分析
   2. 静态分析
-
-  - 模块（库）分析、过程间、上下文不敏感、路径不敏感
-  - 信息由callee传向caller
-  - 输入、输出：接口描述，分析的fact
-  - 发现输出参数
-    - 是指针、写入早于读取
-    - 输入参数：只有读；输入兼输出参数：读后写
-    - 对于写：考虑must别名；对于读：考虑may别名。
-  - 发现数组：
-    - 是指针、参与运算且结果被解引用
-    - 通过进程间信息流倒推caller的传入的实参是数组
-    - 可以通过发现元素也是数组来推出数组的结构，但是没有长度。
-    - 例外：可能通过全局的结构体中的数组来传递。
-  - 内存管理：
-    - 发现构造器：
-      - 返回值是已知构造器的返回值
-      - 返回值是$\phi$，但是所有输入都能被现有的析构器释放（*？*）
-    - 发现析构器：
-
+     - 模块（库）分析、过程间、上下文不敏感、路径不敏感
+     - 信息由callee传向caller
+     - 输入、输出：接口描述，分析的fact
+     - 发现输出参数
+       - 是指针、写入早于读取
+       - 输入参数：只有读；输入兼输出参数：读后写
+       - 对于写：考虑must别名；对于读：考虑may别名。
+     - 发现数组：
+       - 是指针、参与运算且结果被解引用
+       - 通过进程间信息流倒推caller的传入的实参是数组
+       - 可以通过发现元素也是数组来推出数组的结构，但是没有长度。
+       - 例外：可能通过全局的结构体中的数组来传递。
+     - 内存管理：
+       - 发现构造器：
+         - 返回值是已知构造器的返回值
+         - 返回值是$\phi$，但是所有输入都能被现有的析构器释放（*？*）
+       - 发现析构器：
   3. 生成binding：
      - 用ctypes
      - 对C函数生成Python wrapper函数：
@@ -927,11 +828,9 @@ tag:
        - 对于析构器（意味着显式调用析构器），wrapper参数为Python对象，则解除被析构参数的 `__del__`，防止重复析构。
        - 对于有逃逸参数的函数，解除它们的 `__del__`。
 - **实现**：
-
   - 生成SSA：LLVM、CLang
   - 别名分析：Anderson
 - **实验**：
-
   - 数据集：4个开源C库，GLPK，libarchive，libical，GSL
 
 #### [Finding bugs in java native interface programs](https://dl.acm.org/doi/10.1145/1390630.1390645)
@@ -1065,7 +964,6 @@ tag:
     - 和prototype匹配
 
 #### Building Call Graphs for Embedded Client-Side Code in Dynamic Web Applications
-
 - FSE 14, Hung Viet Nguyen, Christian Kästner, Tien N. Nguyen
 - **背景**：
   - 动态网页应用：有服务器端生成客户端应用，前者用PHP、后者是HTML/JS。
@@ -1147,7 +1045,17 @@ tag:
   - 加锁：
     - 全部锁：native方法可能读和写的对象全部加锁
     - 写时锁
-- 
+
+
+#### Cross-Language Call Graph Construction Supporting Different Host Languages
+- SANER 23, Mingzhe Hu, Qi Zhao, Yu Zhang􀀀, Yan Xiong
+- **贡献**：
+  - 客语言是C/C++，主语言是JavaScript、Python
+  - 同时支持多个主语言是指可以用统一的方式来提取函数的映射
+  - 完全没涉及参数类型的提取和转换，所以也缺少回调函数或者回调方法
+
+
+
 ### 动态
 
 #### [Mimic: computing models for opaque code](https://dl.acm.org/doi/10.1145/2786805.2786875)
@@ -1170,10 +1078,14 @@ tag:
 #### [PolyCruise: A Cross-Language Dynamic Information Flow Analysis](https://www.semanticscholar.org/paper/PolyCruise%3A-A-Cross-Language-Dynamic-Information-Li-Ming/4511acdf1e7cf798fad081b691b7c9b7b3bc4186)
 
 - USS 2022, Wen Li, Haipeng Cai(Washington State U~), Jiang Ming(U~ of Texas at Arlington), Xiapu Luo(The Hong Kong Polytechnic U~)
-- **问题**：多语言软件的漏洞可能跨语言或者在语言边界上。目前大部分跨语言的安全分析集中在JNI上。另外一些工具不够实用：语言扩展性不足、规模扩展性不足。
 - **挑战**：语义异构、效率
 - **贡献**：
-- **方法**：静态与动态分析相结合，动态分析弥补因语言的不同而导致静态没法分析的部分；静态分析指导动态分析插桩，以达到较好的延展性和效率。
+- **背景**：
+  - Field-X Analysis：![](./2023-05-22-15-53-35.png)
+    - field-insensitive: 属性直接抹掉，变成base之间的赋值。
+    - field-based：不同实例的同一属性被统一起来。
+    - field-sensitive：不同实例的属性分开对待。
+- **方法**：
   - 特定语言分析：生成语言无关的符号表示（LISR）![](./2023-05-21-22-34-20.png)
 
     - 3种指令：赋值、调用、返回。**field-insensitive**
@@ -1214,18 +1126,7 @@ tag:
   - 能否找漏洞
   - 工具比较。
 
-:::info Python/C的两种FFI
-
-- `ctypes`允许Python载入C的动态链接库。整个库会包装成 `CDLL`对象，导出的C函数是这个对象的属性。调用C函数可以用built-in对象来作为参数。
-- Python/C API：C开发者使用API把C包装成Python的模块。与上面不同，此时C代码对Python是已知的，而且要遵守Python/C的规范来编写代码。
-  :::
-
-:::info Field-X Analysis
-![](./2023-05-22-15-53-35.png)
-
-- field-insensitive: 属性直接抹掉，变成base之间的赋值。
-- field-based：不同实例的同一属性被统一起来。
-- field-sensitive：不同实例的属性分开对待。
+:::info 
   :::
 
 #### [Toward efficient interactions between Python and native libraries](https://dl.acm.org/doi/10.1145/3468264.3468541)
@@ -1285,10 +1186,6 @@ tag:
 
 #### [SafeCheck: Safety Enhancement of Java Unsafe API]()
 
-:::warning
-补充
-:::
-
 - ICSE 19
 
 #### [Dual-force: understanding WebView malware via cross-language forced execution](https://dl.acm.org/doi/10.1145/3238147.3238221)
@@ -1340,17 +1237,7 @@ tag:
     - 实现分类：分析工具
   - 统计方法：
     - 朴素贝叶斯回归模型，应对数据超扩散
-
-#### [The Python/C API: Evolution, Usage Statistics, and Bug Patterns](https://ieeexplore.ieee.org/document/9054835)
-
-- SANER 20, Mingzhe Hu(USTC), Yu Zhang(USTC)
-- **主题**：Python/C API和bug模式
-- **方法**：
-  - 提取官方的Python/C API：宏定义和函数声明
-- **感想**：
-  - 文章短了很多，bug模式的总结有太多的主观性，没有维度的切分
-  - bug怎么总结的？和前面的API演变和使用数据毫无关系。
-  - 这篇文章毫无借鉴意义，很有可能只是学生竞赛投出来的。
+。
 
 #### Going Native: Using a Large-Scale Analysis of Android Apps to Create a Practical Native-Code Sandboxing Policy
 
@@ -1398,7 +1285,34 @@ tag:
       - 对10%的message做关键字搜索：![](./2023-12-17-15-36-58.png)
       - SVM：
   - 回归模型：negative binomial regression
-### 安全
+
+
+#### An empirical study of the Python/C API on evolution and bug patterns
+- Mingzhe Hu1, Yu Zhang
+
+- **RQ**:
+  - Python/C API随着Python版本的变化
+  - Python/API在主流开源项目的使用数据
+  - 关于Python/C API的一些常见bug模式
+- **方法**：
+  - 从Python/C API的头文件中提取宏和函数声明
+- **结果**：
+  - RQ1：
+    - API总数、增删改数量
+    - 增加方面举了两个例子；
+    - 修改方面说了等于没说：参数数量类型和返回值类型变化；举了一个例子。
+  - RQ2：
+    - 使用Python/C API的种类、相似度、调用次数。
+    - 相似度：取同一个项目的两个发布版本，API种类的相似度。发布版本相隔一年，相似度77%-98%。
+    - 代码量和Python/C API的关系
+  - RQ3：
+    - 错误处理异常、缺少异常检查、内存管理缺陷、整型溢出、API更新、缓冲区溢出、其他（引用计数、GIL权限、类型误用）
+    - 只有总结没有数据
+  - 检查工具：
+    - 提出了一个检查器，能够检查7种bug
+    - 
+
+### 其他
 
 #### NativeGuard: Protecting Android Applications from Third-Party Native Libraries
 
@@ -1417,16 +1331,62 @@ tag:
   - real world app：28个。人工检查能跑。
   - 性能：用MiBench（嵌入式系统的benchmark），取其中消费者设备的benchmark迁移到安卓进行测试。
 
+
+#### [Collecting Cyclic Garbage across Foreign Function Interfaces: Who Takes the Last Piece of Cake?](https://dl.acm.org/doi/10.1145/3591244)
+
+- PLDI 23
+- **问题**：使用FFI编程可能存在循环垃圾收集问题
+  - 存在两套堆、垃圾回收器，无法处理循环垃圾
+  - 跨语言边界的垃圾回收特别漫长
+- **贡献**：Refgraph GC
+  - 收集跨越FFI的循环垃圾
+  - 用于Ruby/Java。
+  - 只修改主语言的运行时，且无需更改垃圾回收机制。
+    - 先前有研究采用让两边垃圾回收机制协作的方式
+    - 本文argue说修改库的运行时会降低兼容性、可维护性，因为有一些库是依赖特定版本运行时
+- **背景：一种简单FFI的实现**：
+
+  - 远程引用：引用对方的堆、对象
+  - 代理对象：对象在另一个语言的包装。调用方法时或通过发送消息、或native code扩展。
+  - 导出表：Ruby中被代理的对象会添加到导出表，避免被垃圾回收。导出表相当于根集。当代理对象被JavaScript回收，被代理的对象也会从导出表中删除。
+  - 导入表：保存着对代理对象的**弱引用**，用以周期性地跟踪代理对象的状态。假如代理对象被回收，
+  - 上述FFI是对称的，而且无法回收跨边界的循环引用。
+  - **
+- **方法**：基本上是追踪垃圾回收
+
+  1. 在主语言生成压缩的引用图
+
+  - 有向二分图：包含根集（不含导出表）、导出表中的对象、代理对象；
+  - 边总是从根集、导出表指向代理对象。导出表的出边表示只对外部引用可达。
+  - 3 bits：和对象的数据分开
+    - R：从根集可达？
+    - P：是代理对象？
+    - E：在计算导出表可达时表示是不是被某一对象可达。
+  - 算法：先计算P、R，再对导出表中的对象计算E。
+
+  2. 镜像至外部语言：
+
+  - 主语言中的代理对象 - 外部语言中导出表中的某对象
+  - 主语言导出表的对象 - 外部语言中的代理对象
+  - 对于根集不可达的代理对象，其原对象会在外部语言的导出表中被移除。与原来的区别在于，现在只看根集就移除。
+  - 对于主语言中导出表对象$\rightarrow$代理对象的边，在外部语言中建立代理对象$\rightarrow$导出对象的边。这叫做镜像引用。
+
+  3. 让垃圾回收器回收循环垃圾
+   
 ## 研究组
 ::: warning
 以下出现的姓名可能有颠倒，使用时务必确认！！！
 :::
+
+
 ### Gang Tan（Penn State University）
 
-
+- [OOPSLA' 07](#ilea-inter-language-analysis-across-java-and-c)：从C代码提取成summary然后然后翻译成扩展过的bytecode，所谓扩展就是添加很多符号指令（只能用于分析、不能实际运行的），用来表达C代码的不确定性，比如随机返回int的值，表示系统调用结果；随机更改一个对象的值等
+- [CCS' 10](Robusta: Taming the native beast of the JVM): 改造JVM使之将本地库沙盒化，来降低JVM被本地代码修改内存的风险
 - [APLAS 10](JNI Light: An operational model for the core JNI)：对JNI的一个子集建模，处理了共享堆、跨语言方法调用、异常处理
 - [ISSTA' 11](#jet-exception-checking-in-the-java-native-interface)、[SCP' 14](#exception-analysis-in-the-java-native-interface)：关注JNI程序如何用JNI来处理异常，静态分析查找抛出异常与声明不一致的bug，查找出现异常后的不安全操作。
-- [ESORICS' 12](Jvm-portable sandboxing of java’s native libraries)、[TISSEC' 13](Bringing java's wild native world under control)：改造JVM使之将本地库沙盒化，来降低JVM被本地代码修改内存的风险
+- [ESORICS' 12](Jvm-portable sandboxing of java’s native libraries):基于Robusta改进，使之容易迁移到不同的JVM
+- [TISSEC' 13](Bringing java's wild native world under control)：
 - [APLAS' 16](#jato-native-code-atomicity-for-java)：关注JNI原子性问题，本地代码可能访问同样的Java对象，破环原子性。（可是Java代码也可能访问同一个对象啊，和JNI有啥强联系吗？）这篇工作找到这样的Java对象并给他加锁。
 - [ECOOP' 14](#finding-reference-counting-errors-in-pythonc-programs-with-affine-analysis):
 - [WiSec' 14](#nativeguard-protecting-android-applications-from-third-party-native-libraries)：用进程间通信来沙盒
@@ -1436,18 +1396,20 @@ tag:
 从14年后就不关注native代码相关的问题，更多转向了二进制分析。近期的一篇才回到这个领域以安卓作为切入点。
 
 
-### HaiPeng Cai
-
+### Li Wen，HaiPeng Cai（Washington State University）, Luo Xiapu（The Hong Kong Polytechnic University），Li Li，Jordan Samhi（）
+- []
+- [USS' 22](#polycruise-a-cross-language-dynamic-information-flow-analysis)：对Python/C进行数据流分析，同时使用静态分析和动态插桩。这是一个bug制导的实验。
+- [ICSE' 22](#jucify-a-step-towards-android-code-unification-for-enhanced-static-analysis)：针对Java的bytecode和本地的二进制库，翻译成Jimple，然后在Jimple上分析。
 ### Sungho Lee（KAIST）
 
 - [ASE' 16](#hybridroid-static-analysis-framework-for-android-hybrid-applications)：面向android混合应用，先提出HybridDroid，结合WALA的两个模块，处理互操作的部分，把两种分析粘合起来。
 - [ICSE' 19](#towards-understanding-and-reasoning-about-android-interoperations)：形式化工作，提出了混合应用互操作语义，并且实现类型检查。它只分析JavaScript，只检查MethodNotFound bug，声称比HybridDroid快27X。
 - [ISSTA' 19](#adlib-analyzer-for-mobile-ad-platform-libraries)：针对广告SDK分析，只分析Java侧，以API为入口，通过数据流模式来发现漏洞。
 - [ISSTA' 19](#static-analysis-of-jni-programs-via-binary-decompilation)
-- [ASE' 20](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)：转向JNI，对C语言生成摘要翻译成bytecode，统一来分析。
+- [ASE' 20](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)：转向JNI，对C语言生成摘要翻译成bytecode，统一来分析。分析的目标是找到两类bug：C调用Java方法错误、没有正确处理异常。 
 - [ICSE' 21](#justgen-effective-test-generation-for-unspecified-jni-behaviors-on-jvms)：测试JNI本身，声称JNI接口本身缺少足够的动态检查
 - [SPE' 23](#declarative-static-analysis-for-multilingual-programsusing-codeql)：Java/C、Python/C，规则推导的静态程序分析，通过修改前端、增加fact和规则来解析语言边界，从而在两种语言中推导。
-- [TSE' 23](#static-analysis-of-jni-programs-via-binary-decompilation)
+- [TSE' 23](#static-analysis-of-jni-programs-via-binary-decompilation)：在[ASE' 20](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)做的改进，面向二进制代码，解决反编译问题中一些Java数据结构丢失的问题，比如`JNIEnv*`。
 
 
 ### Sukyoung Ryu:
@@ -1461,12 +1423,27 @@ tag:
 
 ### Lee Byeongcheol，Hirzel Martin，Grimm Robert（IBM Research）
 
-### Hu Mingzhe，Yu Zhang（）
+学生毕业后就没有继续了，最后的研究在2017年
 
 
-### [Tien N. Nguyen]()
+### Xiao Chen, Li Li（Monash University）
 
-### [Li Yi]()
+### Hao Zhou（The Hong Kong Polytechnic University）
+
+### Mouna Abidi
+做跨语言的实证研究
+
+### Jiajun Hu（The Hong Kong University of Science and Technology），Lili Wei（McGill University）
+做安卓WebView相关
+
+### Hu Mingzhe，Yu Zhang（USTC）
+
+
+### Shahid Alam
+
+### Tien N. Nguyen
+
+### Li Yi
 
 ## 总结
 
@@ -1548,8 +1525,20 @@ Adlib的跨语言场景是混合应用。AdSDK，native code是Java，而
 
 ##### 缺陷检测
 
-#### 分析方法
+#### 粒度
 
+##### 调用图生成
+
+##### 数据流分析
+- [](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)
+- [](#a-multilanguage-static-analysis-of-python-programs-with-native-c-extensions)
+- [](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)
+- [](#jucify-a-step-towards-android-code-unification-for-enhanced-static-analysis)
+- [](#hybridroid-static-analysis-framework-for-android-hybrid-applications)
+#### 分析方法
+这种分类方法其实不能反映出每篇研究的挑战是什么，也不能反映论文的重点。比如，我把一篇论文归结于统一建模，但实际上就是Datalog指针分析，论文的重点其实在于如何发现回调函数。
+
+所以会发现很多挑战不是分析方法上的，而是**工程问题**、细节问题。
 ##### 单语言分析
 
 和传统静态分析一样，但是充分考虑跨语言场景的特点，针对性地修改和设计分析方法来针对性解决跨语言场景下的问题。
@@ -1558,7 +1547,9 @@ Adlib的跨语言场景是混合应用。AdSDK，native code是Java，而
 
 这种分析着眼于一个个API，声称在调用一个API的过程中应该满足一些性质，比如引用计数不变、操作序列满足规约等。这种分析往往从一个API作为入口，去考察它之后的执行流和可达的一系列函数和方法。
 
-[Siliang Li](#jet-exception-checking-in-the-java-native-interface)
+- [Siliang Li](#jet-exception-checking-in-the-java-native-interface)、[](#exception-analysis-in-the-java-native-interface)：
+- [](#finding-and-preventing-bugs-in-javascript-bindings)：语法树扫描，做过程内数据流分析，例如`ASSERT`的参数有来自于JS的参数就认为可能导致hard crash bugs。
+- [](#finding-reference-counting-errors-in-pythonc-programs-with-affine-analysis)：
 
 ###### 分析主语言：
 
@@ -1593,11 +1584,22 @@ Adlib的跨语言场景是混合应用。AdSDK，native code是Java，而
 
 - 通用的分析器没有针对场景优化，开销很大
 
+- [](#bilingual-problems-studying-the-security-risks-incurred-by-native-extensions-in-scripting-languages)：连接调用图来发现source/sink
+- [](#cross-language-android-permission-specification)：连接控制流图
+- [](#hybridroid-static-analysis-framework-for-android-hybrid-applications)：连接数据流（IFDS），做污点分析
 ###### 统一表示
 
-###### 统一建模
+基于摘要：
+- [ASE' 20](#broadening-horizons-of-multilingual-static-analysis-semantic-summary-extraction-from-c-code-for-jni-program-analysis)、[](#static-analysis-of-jni-programs-via-binary-decompilation)：C代码中的Java对象（`Object`指针），对每个函数建立了输入输出关系，来生成摘要。
+- [](#ilea-inter-language-analysis-across-java-and-c)：非常保守地对C代码在Java堆上的行为进行建模。
+- [](#jucify-a-step-towards-android-code-unification-for-enhanced-static-analysis)：启发式生成摘要，不再根据数据流，而是去猜测C调用Java方法的参数、返回值等。
+- [](#jn-saf-precise-and-efficient-ndkjni-aware-inter-language-static-analysis-framework-for-security-vetting-of-android-applications-with-native-code)
+###### 统一语义
 
-Declarative static analysis for multilingual programsusing CodeQL
+- [](#declarative-static-analysis-for-multilingual-programsusing-codeql)：整合了两种语言的fact，改写前端来生成fact。
+- [](#towards-understanding-and-reasoning-about-android-interoperations)
+- [](#a-multilanguage-static-analysis-of-python-programs-with-native-c-extensions)
+- [](#identifying-java-calls-in-native-code-via-binary-scanning)：Datalog指针分析，统一语义就是统一的方法调用的语义。论文的挑战在于从二进制代码中发现回调，和构建它的参数。
 
 ## 工具
 
